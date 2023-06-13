@@ -1,16 +1,21 @@
 package com.atguigu.ssyx.sys.controller;
 
-
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.model.sys.RegionWare;
 import com.atguigu.ssyx.sys.service.RegionWareService;
 import com.atguigu.ssyx.vo.sys.RegionWareQueryVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
@@ -20,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
  * @author atguigu
  * @since 2023-04-03
  */
-@Api(tags = "开通区域接口")
+@Tag(name = "开通区域接口")
 @RestController
 @RequestMapping("/admin/sys/regionWare")
 //@CrossOrigin
@@ -33,23 +38,22 @@ public class RegionWareController {
 //    url: `${api_name}/${page}/${limit}`,
 //    method: 'get',
 //    params: searchObj
-    @ApiOperation("开通区域列表")
+    @Operation(description = "开通区域列表")
     @GetMapping("{page}/{limit}")
-    public Result list(@PathVariable Long page,
+    public Result<IPage<RegionWare>> list(@PathVariable Long page,
                        @PathVariable Long limit,
                        RegionWareQueryVo regionWareQueryVo) {
         Page<RegionWare> pageParam = new Page<>(page,limit);
-        IPage<RegionWare> pageModel = regionWareService.selectPageRegionWare(pageParam,regionWareQueryVo);
-        return Result.ok(pageModel);
+        return Result.ok(regionWareService.selectPageRegionWare(pageParam,regionWareQueryVo));
     }
 
     //添加开通区域
 //    url: `${api_name}/save`,
 //    method: 'post',
 //    data: role
-    @ApiOperation("添加开通区域")
+    @Operation(description = "添加开通区域")
     @PostMapping("save")
-    public Result addRegionWare(@RequestBody RegionWare regionWare) {
+    public Result<Boolean> addRegionWare(@RequestBody RegionWare regionWare) {
         regionWareService.saveRegionWare(regionWare);
         return Result.ok(null);
     }
@@ -57,9 +61,9 @@ public class RegionWareController {
     //删除开通区域
 //    url: `${api_name}/remove/${id}`,
 //    method: 'delete'
-    @ApiOperation("删除开通区域")
+    @Operation(description = "删除开通区域")
     @DeleteMapping("remove/{id}")
-    public Result remove(@PathVariable Long id) {
+    public Result<Boolean> remove(@PathVariable Long id) {
         regionWareService.removeById(id);
         return Result.ok(null);
     }
@@ -67,9 +71,9 @@ public class RegionWareController {
     //取消开通区域
 //    url: `${api_name}/updateStatus/${id}/${status}`,
 //    method: 'post'
-    @ApiOperation("取消开通区域")
+    @Operation(description = "取消开通区域")
     @PostMapping("updateStatus/{id}/{status}")
-    public Result updateStatus(@PathVariable Long id,
+    public Result<Boolean> updateStatus(@PathVariable Long id,
                                @PathVariable Integer status) {
         regionWareService.updateStatus(id,status);
         return Result.ok(null);

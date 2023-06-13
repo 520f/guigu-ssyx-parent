@@ -4,7 +4,7 @@ import com.atguigu.ssyx.model.activity.CouponInfo;
 import com.atguigu.ssyx.model.order.CartInfo;
 import com.atguigu.ssyx.vo.order.CartInfoVo;
 import com.atguigu.ssyx.vo.order.OrderConfirmVo;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +22,7 @@ public interface ActivityFeignClient {
     public OrderConfirmVo findCartActivityAndCoupon(@RequestBody List<CartInfo> cartInfoList,
                                                     @PathVariable("userId") Long userId);
 
-    @ApiOperation("根据skuID获取营销数据和优惠卷")
+    @Operation(description = "根据skuID获取营销数据和优惠卷")
     @GetMapping("/api/activity/inner/findActivityAndCoupon/{skuId}/{userId}")
     public Map<String,Object> findActivityAndCoupon(@PathVariable("skuId") Long skuId,
                                                     @PathVariable("userId") Long userId);

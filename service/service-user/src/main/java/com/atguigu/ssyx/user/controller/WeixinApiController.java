@@ -14,7 +14,7 @@ import com.atguigu.ssyx.user.utils.ConstantPropertiesUtil;
 import com.atguigu.ssyx.user.utils.HttpClientUtils;
 import com.atguigu.ssyx.vo.user.LeaderAddressVo;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +34,9 @@ public class WeixinApiController {
     private RedisTemplate redisTemplate;
 
     //用户微信授权登录
-    @ApiOperation(value = "微信登录获取openid(小程序)")
+    @Operation(description = "微信登录获取openid(小程序)")
     @GetMapping("/wxLogin/{code}")
-    public Result loginWx(@PathVariable String code) {
+    public Result<Map<String,Object>> loginWx(@PathVariable String code) {
         //1 得到微信返回code临时票据值
         //2 拿着code + 小程序id + 小程序秘钥 请求微信接口服务
         //// 使用HttpClient工具请求
@@ -47,18 +47,17 @@ public class WeixinApiController {
         //get请求
         //拼接请求地址+参数
         /// 地址?name=value&name1=value1
-        StringBuffer url = new StringBuffer()
-                .append("https://api.weixin.qq.com/sns/jscode2session")
-                .append("?appid=%s")
-                .append("&secret=%s")
-                .append("&js_code=%s")
-                .append("&grant_type=authorization_code");
-        String tokenUrl = String.format(url.toString(),
+        String url = "https://api.weixin.qq.com/sns/jscode2session" +
+                "?appid=%s" +
+                "&secret=%s" +
+                "&js_code=%s" +
+                "&grant_type=authorization_code";
+        String tokenUrl = String.format(url,
                                         wxOpenAppId,
                                         wxOpenAppSecret,
                                         code);
         //HttpClient发送get请求
-        String result = null;
+        String result;
         try {
             result = HttpClientUtils.get(tokenUrl);
         } catch (Exception e) {
@@ -112,8 +111,8 @@ public class WeixinApiController {
     }
 
     @PostMapping("/auth/updateUser")
-    @ApiOperation(value = "更新用户昵称与头像")
-    public Result updateUser(@RequestBody User user) {
+    @Operation(description = "更新用户昵称与头像")
+    public Result<Boolean> updateUser(@RequestBody User user) {
         //获取当前登录用户id
         User user1 = userService.getById(AuthContextHolder.getUserId());
         //把昵称更新为微信用户

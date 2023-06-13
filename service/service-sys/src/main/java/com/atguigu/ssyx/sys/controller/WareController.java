@@ -1,15 +1,12 @@
 package com.atguigu.ssyx.sys.controller;
 
-
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.model.sys.Ware;
 import com.atguigu.ssyx.sys.service.WareService;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -33,11 +30,10 @@ public class WareController {
     //查询所有仓库列表
 //    url: `${api_name}/findAllList`,
 //    method: 'get'
-    @ApiOperation("查询所有仓库列表")
+    @Operation(description = "查询所有仓库列表")
     @GetMapping("findAllList")
-    public Result findAllList() {
-        List<Ware> list = wareService.list();
-        return Result.ok(list);
+    public Result<List<Ware>> findAllList() {
+        return Result.ok(wareService.list());
     }
 }
 

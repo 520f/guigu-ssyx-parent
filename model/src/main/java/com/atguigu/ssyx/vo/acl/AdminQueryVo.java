@@ -2,11 +2,10 @@
 //
 package com.atguigu.ssyx.vo.acl;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
  * <p>
@@ -17,15 +16,15 @@ import java.io.Serializable;
  * @since 2019-11-08
  */
 @Data
-@ApiModel(description = "用户查询实体")
+@Schema(description = "用户查询实体")
 public class AdminQueryVo implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
-	@ApiModelProperty(value = "用户名")
+	@Schema(name= "用户名")
 	private String username;
 
-	@ApiModelProperty(value = "昵称")
+	@Schema(name= "昵称")
 	private String name;
 
 }

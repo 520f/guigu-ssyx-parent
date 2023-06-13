@@ -3,62 +3,61 @@ package com.atguigu.ssyx.model.product;
 import com.atguigu.ssyx.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
-@ApiModel(description = "Comment")
+@Schema(description = "Comment")
 @TableName("comment")
 public class Comment extends BaseEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	@ApiModelProperty(value = "sku_id")
+	@Schema(name = "sku_id")
 	@TableField("sku_id")
 	private Long skuId;
 
-	@ApiModelProperty(value = "商品名字")
+	@Schema(name = "商品名字")
 	@TableField("sku_name")
 	private String skuName;
 
-	@ApiModelProperty(value = "会员昵称")
+	@Schema(name = "会员昵称")
 	@TableField("nick_name")
 	private String nickName;
 
-	@ApiModelProperty(value = "用户头像")
+	@Schema(name = "用户头像")
 	@TableField("icon")
 	private String icon;
 
-	@ApiModelProperty(value = "星级")
+	@Schema(name = "星级")
 	@TableField("star")
 	private Boolean star;
 
-	@ApiModelProperty(value = "会员ip")
+	@Schema(name = "会员ip")
 	@TableField("ip")
 	private String ip;
 
-	@ApiModelProperty(value = "显示状态[0-不显示，1-显示]")
+	@Schema(name = "显示状态[0-不显示，1-显示]")
 	@TableField("status")
 	private Boolean status;
 
-	@ApiModelProperty(value = "点赞数")
+	@Schema(name = "点赞数")
 	@TableField("follow_count")
 	private Integer followCount;
 
-	@ApiModelProperty(value = "回复数")
+	@Schema(name = "回复数")
 	@TableField("reply_count")
 	private Integer replyCount;
 
-	@ApiModelProperty(value = "评论图片/视频[json数据；[{type:文件类型,url:资源路径}]]")
+	@Schema(name = "评论图片/视频[json数据；[{type:文件类型,url:资源路径}]]")
 	@TableField("resources")
 	private String resources;
 
-	@ApiModelProperty(value = "内容")
+	@Schema(name = "内容")
 	@TableField("content")
 	private String content;
 
-	@ApiModelProperty(value = "评论类型[0 - 对商品的直接评论，1 - 对评论的回复]")
+	@Schema(name = "评论类型[0 - 对商品的直接评论，1 - 对评论的回复]")
 	@TableField("type")
 	private Integer type;
 

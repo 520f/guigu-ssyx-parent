@@ -3,6 +3,8 @@ package com.atguigu.ssyx.common.config;
 import lombok.Data;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.Codec;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 import org.redisson.config.SingleServerConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -48,6 +50,9 @@ public class RedissonConfig {
                 .setPingConnectionInterval(pingConnectionInterval)
                 .setConnectionPoolSize(this.connectionPoolSize)
                 .setConnectionMinimumIdleSize(this.connectionMinimumIdleSize);
+        //使用json序列化方式
+        Codec codec = new JsonJacksonCodec();
+        config.setCodec(codec);
         //  判断进入redis 是否密码
         if(!StringUtils.isEmpty(this.password)) {
             serverConfig.setPassword(this.password);

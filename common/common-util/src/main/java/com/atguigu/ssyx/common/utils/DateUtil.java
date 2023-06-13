@@ -1,6 +1,7 @@
 package com.atguigu.ssyx.common.utils;
 
-import org.apache.commons.lang.time.DateUtils;
+
+import org.apache.commons.lang3.time.DateUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -75,10 +76,7 @@ public class DateUtil {
      */
     public static boolean dateCompare(Date beginDate, Date endDate) {
         // endDate > beginDate
-        if (DateUtil.truncatedCompareTo(beginDate, endDate, Calendar.SECOND) == 1) {
-            return false;
-        }
-        return true;
+        return DateUtil.truncatedCompareTo(beginDate, endDate, Calendar.SECOND) != 1;
     }
 
     /**

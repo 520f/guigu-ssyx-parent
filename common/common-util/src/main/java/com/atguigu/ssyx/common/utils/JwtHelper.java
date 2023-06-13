@@ -6,12 +6,12 @@ import java.util.Date;
 
 public class JwtHelper {
 
-    private static long tokenExpiration = 365*24*60*60*1000;
-    private static String tokenSignKey = "ssyx";
+    private static final String tokenSignKey = "ssyx";
 
     //根据userId+userName生成token字符串
     public static String createToken(Long userId, String userName) {
-        String token = Jwts.builder()
+        long tokenExpiration = 365L * 24 * 60 * 60 * 1000;
+        return Jwts.builder()
                 .setSubject("ssyx-USER")
 
                 .setExpiration(new Date(System.currentTimeMillis() + tokenExpiration))
@@ -23,7 +23,6 @@ public class JwtHelper {
 
                 .compressWith(CompressionCodecs.GZIP)
                 .compact();
-        return token;
     }
 
     public static Long getUserId(String token) {

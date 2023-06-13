@@ -1,13 +1,12 @@
 package com.atguigu.ssyx.product.api;
 
-import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.model.product.Category;
 import com.atguigu.ssyx.model.product.SkuInfo;
 import com.atguigu.ssyx.product.service.CategoryService;
 import com.atguigu.ssyx.product.service.SkuInfoService;
 import com.atguigu.ssyx.vo.product.SkuInfoVo;
 import com.atguigu.ssyx.vo.product.SkuStockLockVo;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +25,7 @@ public class ProductInnnerController {
     //根据分类id获取分类信息
     @GetMapping("inner/getCategory/{categoryId}")
     public Category  getCategory(@PathVariable Long categoryId) {
-        Category category = categoryService.getById(categoryId);
-        return category;
+        return categoryService.getById(categoryId);
     }
 
     //根据skuid获取sku信息
@@ -57,15 +55,13 @@ public class ProductInnnerController {
     //获取所有分类
     @GetMapping("inner/findAllCategoryList")
     public List<Category> findAllCategoryList() {
-        List<Category> categoryList = categoryService.list();
-        return categoryList;
+        return categoryService.list();
     }
 
     //获取新人专享商品
     @GetMapping("inner/findNewPersonSkuInfoList")
     public List<SkuInfo> findNewPersonSkuInfoList() {
-        List<SkuInfo> list = skuInfoService.findNewPersonSkuInfoList();
-        return list;
+        return skuInfoService.findNewPersonSkuInfoList();
     }
 
     //根据skuId获取sku信息
@@ -75,7 +71,7 @@ public class ProductInnnerController {
     }
 
     //验证和锁定库存
-    @ApiOperation(value = "锁定库存")
+    @Operation(description = "锁定库存")
     @PostMapping("inner/checkAndLock/{orderNo}")
     public Boolean checkAndLock(@RequestBody List<SkuStockLockVo> skuStockLockVoList,
                                 @PathVariable String orderNo) {

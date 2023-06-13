@@ -1,13 +1,12 @@
 package com.atguigu.ssyx.vo.sys;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import java.util.Date;
-import io.swagger.annotations.ApiModelProperty;
 
 @Data
 public class RegionWareQueryVo {
 	
-	@ApiModelProperty(value = "关键字")
+	@Schema(name = "关键字")
 	private String keyword;
 
 }

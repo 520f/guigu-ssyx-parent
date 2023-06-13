@@ -1,29 +1,29 @@
 package com.atguigu.ssyx.vo.order;
 
 import com.atguigu.ssyx.enums.OrderStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import io.swagger.annotations.ApiModelProperty;
 
 @Data
 public class OrderQueryVo {
 	
 
-	@ApiModelProperty(value = "订单号")
+	@Schema(name = "订单号")
 	private String orderNo;
 
-	@ApiModelProperty(value = "收货人信息")
+	@Schema(name = "收货人信息")
 	private String receiver;
 
-	@ApiModelProperty(value = "订单状态")
+	@Schema(name = "订单状态")
 	private OrderStatus orderStatus;
 
-	@ApiModelProperty(value = "团长id")
+	@Schema(name = "团长id")
 	private Long leaderId;
 
-	@ApiModelProperty(value = "仓库id")
+	@Schema(name = "仓库id")
 	private Long wareId;
 
-	@ApiModelProperty(value = "创建时间")
+	@Schema(name = "创建时间")
 	private String createTimeBegin;
 	private String createTimeEnd;
 

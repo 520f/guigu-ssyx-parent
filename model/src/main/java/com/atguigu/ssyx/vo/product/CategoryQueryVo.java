@@ -1,13 +1,12 @@
 package com.atguigu.ssyx.vo.product;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import java.util.Date;
-import io.swagger.annotations.ApiModelProperty;
 
 @Data
 public class CategoryQueryVo {
-	
-	@ApiModelProperty(value = "分类名称")
+
+	@Schema(name = "分类名称")
 	private String name;
 
 }

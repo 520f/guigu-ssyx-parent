@@ -31,11 +31,10 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMappper, Paym
 
     @Override
     public PaymentInfo getPaymentInfoByOrderNo(String orderNo) {
-        PaymentInfo paymentInfo = baseMapper.selectOne(
+        return baseMapper.selectOne(
                 new LambdaQueryWrapper<PaymentInfo>()
                         .eq(PaymentInfo::getOrderNo, orderNo)
         );
-        return paymentInfo;
     }
 
     @Override

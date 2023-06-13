@@ -3,8 +3,7 @@ package com.atguigu.ssyx.model.activity;
 import com.atguigu.ssyx.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -15,17 +14,17 @@ import lombok.Data;
  * @author qy
  */
 @Data
-@ApiModel(description = "ActivitySku")
+@Schema(description = "ActivitySku")
 @TableName("activity_sku")
 public class ActivitySku extends BaseEntity {
 	
 	private static final long serialVersionUID = 1L;
 	
-	@ApiModelProperty(value = "活动id ")
+	@Schema(name = "活动id ")
 	@TableField("activity_id")
 	private Long activityId;
 
-	@ApiModelProperty(value = "sku_id")
+	@Schema(name = "sku_id")
 	@TableField("sku_id")
 	private Long skuId;
 

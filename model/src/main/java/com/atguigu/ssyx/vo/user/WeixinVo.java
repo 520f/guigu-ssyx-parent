@@ -1,14 +1,12 @@
 package com.atguigu.ssyx.vo.user;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
 @Data
-@ApiModel(description = "weixinVo")
+@Schema(description = "weixinVo")
 public class WeixinVo implements Serializable {
 
 	private static final long serialVersionUID = 1L;

@@ -1,43 +1,44 @@
 package com.atguigu.ssyx.vo.user;
 
-import lombok.Data;
 import java.util.Date;
-import io.swagger.annotations.ApiModelProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 @Data
 public class LeaderBillQueryVo {
 	
-	@ApiModelProperty(value = "团长ID")
+	@Schema(name= "团长ID")
 	private String leaderId;
 
-	@ApiModelProperty(value = "账单类型")
+	@Schema(name= "账单类型")
 	private String billType;
 
-	@ApiModelProperty(value = "业务编号")
+	@Schema(name= "业务编号")
 	private String businessNo;
 
-	@ApiModelProperty(value = "交易时间")
+	@Schema(name= "交易时间")
 	private Date billTime;
 
-	@ApiModelProperty(value = "账单金额")
+	@Schema(name= "账单金额")
 	private String billAmount;
 
-	@ApiModelProperty(value = "账单编号")
+	@Schema(name= "账单编号")
 	private String billNo;
 
-	@ApiModelProperty(value = "账单描述")
+	@Schema(name= "账单描述")
 	private String billDesc;
 
-	@ApiModelProperty(value = "交易前资金余额")
+	@Schema(name= "交易前资金余额")
 	private String balanceBefore;
 
-	@ApiModelProperty(value = "交易后资金余额")
+	@Schema(name= "交易后资金余额")
 	private String balanceAfter;
 
-	@ApiModelProperty(value = "账单状态")
+	@Schema(name= "账单状态")
 	private Integer billStatus;
 
-	@ApiModelProperty(value = "创建时间")
+	@Schema(name= "创建时间")
 	private Date createTime;
 
 }

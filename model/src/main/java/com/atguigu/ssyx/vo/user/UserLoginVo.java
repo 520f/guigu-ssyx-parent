@@ -1,36 +1,35 @@
 package com.atguigu.ssyx.vo.user;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
 @Data
-@ApiModel(description = "用户登录信息")
+@Schema(description = "用户登录信息")
 public class UserLoginVo implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	@ApiModelProperty(value = "用户id")
+	@Schema(name = "用户id")
 	private Long userId;
 
-	@ApiModelProperty(value = "会员头像")
+	@Schema(name = "会员头像")
 	private String photoUrl;
 
-	@ApiModelProperty(value = "昵称")
+	@Schema(name = "昵称")
 	private String nickName;
 
-	@ApiModelProperty(value = "小程序open id")
+	@Schema(name = "小程序open id")
 	private String openId;
 
-	@ApiModelProperty(value = "是否新用户")
+	@Schema(name = "是否新用户")
 	private Integer isNew;
 
-	@ApiModelProperty(value = "当前登录用户团长id")
+	@Schema(name = "当前登录用户团长id")
 	private Long leaderId;
 
-	@ApiModelProperty(value = "仓库id")
+	@Schema(name = "仓库id")
 	private Long wareId;
 
 }

@@ -1,16 +1,15 @@
 package com.atguigu.ssyx.vo.sys;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
 public class RegionVo {
 
-	@ApiModelProperty(value = "开通区域")
+	@Schema(name = "开通区域")
 	private Long regionId;
 
-	@ApiModelProperty(value = "区域名称")
+	@Schema(name = "区域名称")
 	private String regionName;
 
 }

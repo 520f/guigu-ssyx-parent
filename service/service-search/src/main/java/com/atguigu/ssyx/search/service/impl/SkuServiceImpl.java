@@ -10,6 +10,7 @@ import com.atguigu.ssyx.model.search.SkuEs;
 import com.atguigu.ssyx.search.repository.SkuRepository;
 import com.atguigu.ssyx.search.service.SkuService;
 import com.atguigu.ssyx.vo.search.SkuEsQueryVo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,10 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -63,8 +64,7 @@ public class SkuServiceImpl implements SkuService {
         // 0代表第一页
         Pageable pageable = PageRequest.of(0,10);
         Page<SkuEs> pageModel = skuRepository.findByOrderByHotScoreDesc(pageable);
-        List<SkuEs> skuEsList = pageModel.getContent();
-        return skuEsList;
+        return pageModel.getContent();
     }
 
     //查询分类商品
@@ -100,7 +100,7 @@ public class SkuServiceImpl implements SkuService {
             //遍历skuEsList，得到所有skuId
             List<Long> skuIdList =
                     skuEsList.stream()
-                            .map(item -> item.getId())
+                            .map(SkuEs::getId)
                             .collect(Collectors.toList());
             //根据skuId列表远程调用，调用service-activity里面的接口得到数据
             //返回Map<Long,List<String>>
@@ -145,7 +145,8 @@ public class SkuServiceImpl implements SkuService {
         skuEs.setIsNewPerson(skuInfo.getIsNewPerson());
         skuEs.setImgUrl(skuInfo.getImgUrl());
         skuEs.setTitle(skuInfo.getSkuName());
-        if(skuInfo.getSkuType() == SkuType.COMMON.getCode()) {//普通商品
+        //普通商品
+        if(Objects.equals(skuInfo.getSkuType(), SkuType.COMMON.getCode())) {
             skuEs.setSkuType(0);
             skuEs.setPrice(skuInfo.getPrice().doubleValue());
             skuEs.setStock(skuInfo.getStock());

@@ -7,3 +7,6 @@ spring:
     nacos:
       discovery:
         server-addr: localhost:8848
+
+    openfeign:
+      lazy-attributes-resolution: true

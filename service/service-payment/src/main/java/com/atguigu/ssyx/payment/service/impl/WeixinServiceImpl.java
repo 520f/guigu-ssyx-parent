@@ -2,17 +2,16 @@ package com.atguigu.ssyx.payment.service.impl;
 
 import com.atguigu.ssyx.common.constant.RedisConst;
 import com.atguigu.ssyx.model.order.PaymentInfo;
-import com.atguigu.ssyx.order.client.OrderFeignClient;
 import com.atguigu.ssyx.payment.service.PaymentInfoService;
 import com.atguigu.ssyx.payment.service.WeixinService;
 import com.atguigu.ssyx.payment.utils.ConstantPropertiesUtils;
 import com.atguigu.ssyx.payment.utils.HttpClient;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
 import com.github.wxpay.sdk.WXPayUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -54,14 +53,13 @@ public class WeixinServiceImpl implements WeixinService {
         //openid
         UserLoginVo userLoginVo = (UserLoginVo)redisTemplate.opsForValue()
                 .get(RedisConst.USER_LOGIN_KEY_PREFIX + paymentInfo.getUserId());
-        if(null != userLoginVo && !StringUtils.isEmpty(userLoginVo.getOpenId())) {
+        if(null != userLoginVo && StringUtils.isNotEmpty(userLoginVo.getOpenId())) {
             paramMap.put("openid", userLoginVo.getOpenId());
         } else {
             paramMap.put("openid", "odo3j4q2KskkbbW-krfE-cAxUnzU1");
         }
         //3 使用HttpClient调用微信支付系统接口
-        HttpClient client =
-                new HttpClient("https://api.mch.weixin.qq.com/pay/unifiedorder");
+        HttpClient client =new HttpClient("https://api.mch.weixin.qq.com/pay/unifiedorder");
         //设置参数，xml格式
         try {
             client.setXmlParam(WXPayUtil.generateSignedXml(paramMap,ConstantPropertiesUtils.PARTNERKEY));
@@ -84,7 +82,7 @@ public class WeixinServiceImpl implements WeixinService {
             String sign = WXPayUtil.generateSignature(parameterMap, ConstantPropertiesUtils.PARTNERKEY);
 
             //返回结果
-            Map<String, String> result = new HashMap();
+            Map<String, String> result = new HashMap<>();
             result.put("timeStamp", parameterMap.get("timeStamp"));
             result.put("nonceStr", parameterMap.get("nonceStr"));
             result.put("signType", "MD5");
@@ -102,7 +100,7 @@ public class WeixinServiceImpl implements WeixinService {
     @Override
     public Map<String, String> queryPayStatus(String orderNo) {
         //封装数据、
-        Map paramMap = new HashMap();
+        Map<String,String> paramMap = new HashMap<>();
         paramMap.put("appid", ConstantPropertiesUtils.APPID);
         paramMap.put("mch_id", ConstantPropertiesUtils.PARTNER);
         paramMap.put("out_trade_no", orderNo);
@@ -117,8 +115,7 @@ public class WeixinServiceImpl implements WeixinService {
 
             //3 得到返回结果
             String xml = client.getContent();
-            Map<String, String> stringMap = WXPayUtil.xmlToMap(xml);
-            return stringMap;
+            return WXPayUtil.xmlToMap(xml);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

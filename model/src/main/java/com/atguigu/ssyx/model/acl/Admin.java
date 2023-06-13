@@ -3,8 +3,7 @@ package com.atguigu.ssyx.model.acl;
 import com.atguigu.ssyx.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -16,33 +15,33 @@ import lombok.Data;
  * @since 2019-11-08
  */
 @Data
-@ApiModel(description = "用户")
+@Schema(description = "用户")
 @TableName("admin")
 public class Admin extends BaseEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	@ApiModelProperty(value = "用户名")
+	@Schema(name = "用户名")
 	@TableField("username")
 	private String username;
 
-	@ApiModelProperty(value = "密码")
+	@Schema(name = "密码")
 	@TableField("password")
 	private String password;
 
-	@ApiModelProperty(value = "昵称")
+	@Schema(name = "昵称")
 	@TableField("name")
 	private String name;
 
-	@ApiModelProperty(value = "手机")
+	@Schema(name = "手机")
 	@TableField("phone")
 	private String phone;
 
-	@ApiModelProperty(value = "仓库id")
+	@Schema(name = "仓库id")
 	@TableField("ware_id")
 	private Long wareId;
 
-	@ApiModelProperty(value = "角色名称")
+	@Schema(name = "角色名称")
 	@TableField(exist = false)
 	private String roleName;
 }

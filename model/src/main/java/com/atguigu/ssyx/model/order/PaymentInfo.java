@@ -1,61 +1,60 @@
 package com.atguigu.ssyx.model.order;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 import com.atguigu.ssyx.enums.PaymentStatus;
 import com.atguigu.ssyx.enums.PaymentType;
 import com.atguigu.ssyx.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.math.BigDecimal;
-import java.util.Date;
-
 @Data
-@ApiModel(description = "PaymentInfo")
+@Schema(description = "PaymentInfo")
 @TableName("payment_info")
 public class PaymentInfo extends BaseEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	@ApiModelProperty(value = "对外业务编号")
+	@Schema(name= "对外业务编号")
 	@TableField("order_no")
 	private String orderNo;
 
-	@ApiModelProperty(value = "订单编号")
+	@Schema(name= "订单编号")
 	@TableField("order_id")
 	private Long orderId;
 
-	@ApiModelProperty(value = "用户id")
+	@Schema(name= "用户id")
 	@TableField("user_id")
 	private Long userId;
 
-	@ApiModelProperty(value = "支付类型（微信 支付宝）")
+	@Schema(name= "支付类型（微信 支付宝）")
 	@TableField("payment_type")
 	private PaymentType paymentType;
 
-	@ApiModelProperty(value = "交易编号")
+	@Schema(name= "交易编号")
 	@TableField("trade_no")
 	private String tradeNo;
 
-	@ApiModelProperty(value = "支付金额")
+	@Schema(name= "支付金额")
 	@TableField("total_amount")
 	private BigDecimal totalAmount;
 
-	@ApiModelProperty(value = "交易内容")
+	@Schema(name= "交易内容")
 	@TableField("subject")
 	private String subject;
 
-	@ApiModelProperty(value = "支付状态")
+	@Schema(name= "支付状态")
 	@TableField("payment_status")
 	private PaymentStatus paymentStatus;
 
-	@ApiModelProperty(value = "回调时间")
+	@Schema(name= "回调时间")
 	@TableField("callback_time")
 	private Date callbackTime;
 
-	@ApiModelProperty(value = "回调信息")
+	@Schema(name= "回调信息")
 	@TableField("callback_content")
 	private String callbackContent;
 

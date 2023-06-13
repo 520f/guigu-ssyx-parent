@@ -10,15 +10,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
@@ -39,15 +38,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
         //判断条件值是否为空，不为封装查询条件
         // rolename like ?
-        if(!StringUtils.isEmpty(roleName)) {
-            wrapper.like(Role::getRoleName,roleName);
-        }
+        wrapper.like(StringUtils.isNotEmpty(roleName),Role::getRoleName,roleName);
 
-        //调用方法实现条件分页查询
-        IPage<Role> rolePage = baseMapper.selectPage(pageParam, wrapper);
-
-        //返回分页对象
-        return rolePage;
+        //调用方法实现条件分页查询,返回分页对象
+        return baseMapper.selectPage(pageParam, wrapper);
     }
 
     //获取所有角色，和根据用户id查询用户分配角色列表
@@ -65,10 +59,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         List<AdminRole> adminRoleList = adminRoleService.list(wrapper);
 
         //2.2 通过第一步返回集合，获取所有角色id的列表List<AdminRole> -- List<Long>
-        List<Long> roleIdsList =
-                adminRoleList.stream()
-                        .map(item -> item.getRoleId())
-                        .collect(Collectors.toList());
+        List<Long> roleIdsList =adminRoleList.stream()
+                        .map(AdminRole::getRoleId)
+                        .toList();
 
         //2.3 创建新的list集合，用于存储用户配置角色
         List<Role> assignRoleList = new ArrayList<>();

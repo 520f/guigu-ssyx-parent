@@ -1,30 +1,29 @@
 package com.atguigu.ssyx.vo.activity;
 
-import com.atguigu.ssyx.model.activity.ActivityRule;
-import com.atguigu.ssyx.model.activity.ActivitySku;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
 import java.util.List;
 
+import com.atguigu.ssyx.model.activity.ActivityRule;
+import com.atguigu.ssyx.model.activity.ActivitySku;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
 @Data
-@ApiModel(description = "活动规则")
+@Schema(description = "活动规则")
 public class ActivityRuleVo implements Serializable {
    
    private static final long serialVersionUID = 1L;
 
-   @ApiModelProperty(value = "活动id")
+   @Schema(name = "活动id")
    private Long activityId;
    
-   @ApiModelProperty(value = "活动规则list")
+   @Schema(name = "活动规则list")
    private List<ActivityRule> activityRuleList;
 
-   @ApiModelProperty(value = "活动参与商品list")
+   @Schema(name = "活动参与商品list")
    private List<ActivitySku> activitySkuList;
 
-   @ApiModelProperty(value = "优惠券id列表")
+   @Schema(name = "优惠券id列表")
    private List<Long> couponIdList;
 
 }

@@ -1,12 +1,12 @@
 package com.atguigu.ssyx.vo.order;
 
-import com.atguigu.ssyx.model.activity.ActivityRule;
-import com.atguigu.ssyx.model.order.CartInfo;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
 import java.util.List;
+
+import com.atguigu.ssyx.model.activity.ActivityRule;
+import com.atguigu.ssyx.model.order.CartInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
  * <p>
@@ -23,10 +23,10 @@ public class CartInfoVo implements Serializable {
 	/**
 	 * 购物项凑单，同一活动对应的最优活动规则
 	 */
-	@ApiModelProperty(value = "cartInfoList")
+	@Schema(name = "cartInfoList")
 	private List<CartInfo> cartInfoList;
 
-	@ApiModelProperty(value = "活动规则")
+	@Schema(name = "活动规则")
 	private ActivityRule activityRule;
 
 

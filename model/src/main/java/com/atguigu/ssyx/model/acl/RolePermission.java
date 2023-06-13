@@ -5,8 +5,7 @@ package com.atguigu.ssyx.model.acl;
 import com.atguigu.ssyx.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -18,17 +17,17 @@ import lombok.Data;
  * @since 2019-11-08
  */
 @Data
-@ApiModel(description = "角色权限")
+@Schema(description = "角色权限")
 @TableName("role_permission")
 public class RolePermission extends BaseEntity {
 	
 	private static final long serialVersionUID = 1L;
 	
-	@ApiModelProperty(value = "roleid")
+	@Schema(name = "roleid")
 	@TableField("role_id")
 	private Long roleId;
 
-	@ApiModelProperty(value = "permissionId")
+	@Schema(name = "permissionId")
 	@TableField("permission_id")
 	private Long permissionId;
 

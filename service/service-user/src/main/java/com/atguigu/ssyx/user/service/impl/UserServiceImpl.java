@@ -11,7 +11,6 @@ import com.atguigu.ssyx.vo.user.LeaderAddressVo;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,10 +27,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     //// 判断是否是第一次使用微信授权登录：如何判断？openId
     @Override
     public User getUserByOpenId(String openid) {
-        User user = baseMapper.selectOne(
+        return baseMapper.selectOne(
                 new LambdaQueryWrapper<User>().eq(User::getOpenId, openid)
         );
-        return user;
     }
 
     //5 根据userId查询提货点和团长信息

@@ -11,7 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class) //异常处理器
     @ResponseBody  //返回json数据
-    public Result error(Exception e) {
+    public Result<String> error(Exception e) {
         e.printStackTrace();
         return Result.fail(null);
     }
@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     //自定义异常处理
     @ExceptionHandler(SsyxException.class)
     @ResponseBody
-    public Result error(SsyxException exception) {
+    public Result<String> error(SsyxException exception) {
         return Result.build(null,exception.getCode(),exception.getMessage());
     }
 }

@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -30,11 +30,8 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     public IPage<AttrGroup> selectPageAttrGroup(Page<AttrGroup> pageParam, AttrGroupQueryVo attrGroupQueryVo) {
         String name = attrGroupQueryVo.getName();
         LambdaQueryWrapper<AttrGroup> wrapper = new LambdaQueryWrapper<>();
-        if(!StringUtils.isEmpty(name)) {
-            wrapper.like(AttrGroup::getName,name);
-        }
-        IPage<AttrGroup> pageModel = baseMapper.selectPage(pageParam,wrapper);
-        return pageModel;
+        wrapper.like(StringUtils.isNotEmpty(name),AttrGroup::getName,name);
+        return baseMapper.selectPage(pageParam,wrapper);
     }
 
     //查询所有平台属性分组列表
@@ -43,7 +40,6 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
        //LambdaQueryWrapper<AttrGroup> wrapper = new LambdaQueryWrapper<>();
         QueryWrapper<AttrGroup> wrapper = new QueryWrapper<>();
         wrapper.orderByDesc("id");
-        List<AttrGroup> list = baseMapper.selectList(wrapper);
-        return list;
+        return baseMapper.selectList(wrapper);
     }
 }

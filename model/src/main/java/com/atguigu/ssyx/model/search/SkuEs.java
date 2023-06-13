@@ -1,20 +1,15 @@
 package com.atguigu.ssyx.model.search;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
+
 import lombok.Data;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
-import java.util.Date;
-import java.util.List;
-
 @Data
-@Document(indexName = "skues" ,shards = 3,replicas = 1)
+@Document(indexName = "skues")
 public class SkuEs {
 
     // 商品Id= skuId

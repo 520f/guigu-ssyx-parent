@@ -6,12 +6,10 @@ import com.atguigu.ssyx.model.activity.CouponInfo;
 import com.atguigu.ssyx.model.order.CartInfo;
 import com.atguigu.ssyx.vo.order.CartInfoVo;
 import com.atguigu.ssyx.vo.order.OrderConfirmVo;
-import io.swagger.annotations.ApiOperation;
-import org.checkerframework.checker.units.qual.A;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -32,13 +30,13 @@ public class ActivityInfoApiController {
         return activityInfoService.findCartActivityAndCoupon(cartInfoList,userId);
     }
 
-    @ApiOperation(value = "根据skuId列表获取促销信息")
+    @Operation(description = "根据skuId列表获取促销信息")
     @PostMapping("inner/findActivity")
     public Map<Long, List<String>> findActivity(@RequestBody List<Long> skuIdList) {
         return activityInfoService.findActivity(skuIdList);
     }
 
-    @ApiOperation("根据skuID获取营销数据和优惠卷")
+    @Operation(description = "根据skuID获取营销数据和优惠卷")
     @GetMapping("inner/findActivityAndCoupon/{skuId}/{userId}")
     public Map<String,Object> findActivityAndCoupon(@PathVariable Long skuId,
                                                     @PathVariable Long userId) {

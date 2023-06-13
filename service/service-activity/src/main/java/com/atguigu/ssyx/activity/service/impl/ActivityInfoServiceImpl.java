@@ -1,13 +1,13 @@
 package com.atguigu.ssyx.activity.service.impl;
 
+import com.atguigu.ssyx.activity.mapper.ActivityInfoMapper;
 import com.atguigu.ssyx.activity.mapper.ActivityRuleMapper;
 import com.atguigu.ssyx.activity.mapper.ActivitySkuMapper;
+import com.atguigu.ssyx.activity.service.ActivityInfoService;
 import com.atguigu.ssyx.activity.service.CouponInfoService;
 import com.atguigu.ssyx.client.product.ProductFeignClient;
 import com.atguigu.ssyx.enums.ActivityType;
 import com.atguigu.ssyx.model.activity.ActivityInfo;
-import com.atguigu.ssyx.activity.mapper.ActivityInfoMapper;
-import com.atguigu.ssyx.activity.service.ActivityInfoService;
 import com.atguigu.ssyx.model.activity.ActivityRule;
 import com.atguigu.ssyx.model.activity.ActivitySku;
 import com.atguigu.ssyx.model.activity.CouponInfo;
@@ -20,8 +20,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -102,8 +100,8 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         BigDecimal couponReduceAmount = new BigDecimal(0);
         if(!CollectionUtils.isEmpty(couponInfoList)) {
             couponReduceAmount = couponInfoList.stream()
-                    .filter(couponInfo -> couponInfo.getIsOptimal().intValue() == 1)
-                    .map(couponInfo -> couponInfo.getAmount())
+                    .filter(couponInfo -> couponInfo.getIsOptimal() == 1)
+                    .map(CouponInfo::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
 
@@ -165,7 +163,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
             //封装到activityIdToActivityRuleListMap里面
             //根据活动id进行分组
             activityIdToActivityRuleListMap = activityRuleList.stream().collect(
-                    Collectors.groupingBy(activityRule -> activityRule.getActivityId())
+                    Collectors.groupingBy(ActivityRule::getActivityId)
             );
         }
 
@@ -173,9 +171,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         Set<Long> activitySkuIdSet = new HashSet<>();
         if(!CollectionUtils.isEmpty(activityIdToSkuIdListMap)) {
             //遍历activityIdToSkuIdListMap集合
-            Iterator<Map.Entry<Long, Set<Long>>> iterator = activityIdToSkuIdListMap.entrySet().iterator();
-            while(iterator.hasNext()) {
-                Map.Entry<Long, Set<Long>> entry = iterator.next();
+            for (Map.Entry<Long, Set<Long>> entry : activityIdToSkuIdListMap.entrySet()) {
                 //活动id
                 Long activityId = entry.getKey();
                 //每个活动对应skuId列表
@@ -195,10 +191,12 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                         activityIdToActivityRuleListMap.get(activityId);
                 ActivityType activityType = currentActivityRuleList.get(0).getActivityType();
                 //判断活动类型：满减和打折
-                ActivityRule activityRule = null;
-                if(activityType == ActivityType.FULL_REDUCTION) {//满减"
+                ActivityRule activityRule;
+                //满减"
+                if (activityType == ActivityType.FULL_REDUCTION) {
                     activityRule = this.computeFullReduction(activityTotalAmount, currentActivityRuleList);
-                } else {//满量
+                //满量
+                } else {
                     activityRule = this.computeFullDiscount(activityTotalNum, activityTotalAmount, currentActivityRuleList);
                 }
 
@@ -223,7 +221,8 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
             );
             for(Long skuId  : skuIdList) {
                 CartInfoVo cartInfoVo = new CartInfoVo();
-                cartInfoVo.setActivityRule(null);//没有活动
+                //没有活动
+                cartInfoVo.setActivityRule(null);
 
                 List<CartInfo> cartInfos = new ArrayList<>();
                 cartInfos.add(skuIdCartInfoMap.get(skuId));
@@ -238,7 +237,6 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
     /**
      * 计算满量打折最优规则
-     * @param totalNum
      * @param activityRuleList //该活动规则skuActivityRuleList数据，已经按照优惠折扣从大到小排序了
      */
     private ActivityRule computeFullDiscount(Integer totalNum, BigDecimal totalAmount, List<ActivityRule> activityRuleList) {
@@ -246,7 +244,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         //该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
         for (ActivityRule activityRule : activityRuleList) {
             //如果订单项购买个数大于等于满减件数，则优化打折
-            if (totalNum.intValue() >= activityRule.getConditionNum()) {
+            if (totalNum >= activityRule.getConditionNum()) {
                 BigDecimal skuDiscountTotalAmount = totalAmount.multiply(activityRule.getBenefitDiscount().divide(new BigDecimal("10")));
                 BigDecimal reduceAmount = totalAmount.subtract(skuDiscountTotalAmount);
                 activityRule.setReduceAmount(reduceAmount);
@@ -260,25 +258,23 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
             optimalActivityRule.setReduceAmount(new BigDecimal("0"));
             optimalActivityRule.setSelectType(1);
 
-            StringBuffer ruleDesc = new StringBuffer()
-                    .append("满")
-                    .append(optimalActivityRule.getConditionNum())
-                    .append("元打")
-                    .append(optimalActivityRule.getBenefitDiscount())
-                    .append("折，还差")
-                    .append(totalNum-optimalActivityRule.getConditionNum())
-                    .append("件");
-            optimalActivityRule.setRuleDesc(ruleDesc.toString());
+            String ruleDesc = "满" +
+                    optimalActivityRule.getConditionNum() +
+                    "元打" +
+                    optimalActivityRule.getBenefitDiscount() +
+                    "折，还差" +
+                    (totalNum - optimalActivityRule.getConditionNum()) +
+                    "件";
+            optimalActivityRule.setRuleDesc(ruleDesc);
         } else {
-            StringBuffer ruleDesc = new StringBuffer()
-                    .append("满")
-                    .append(optimalActivityRule.getConditionNum())
-                    .append("元打")
-                    .append(optimalActivityRule.getBenefitDiscount())
-                    .append("折，已减")
-                    .append(optimalActivityRule.getReduceAmount())
-                    .append("元");
-            optimalActivityRule.setRuleDesc(ruleDesc.toString());
+            String ruleDesc = "满" +
+                    optimalActivityRule.getConditionNum() +
+                    "元打" +
+                    optimalActivityRule.getBenefitDiscount() +
+                    "折，已减" +
+                    optimalActivityRule.getReduceAmount() +
+                    "元";
+            optimalActivityRule.setRuleDesc(ruleDesc);
             optimalActivityRule.setSelectType(2);
         }
         return optimalActivityRule;
@@ -286,7 +282,6 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
     /**
      * 计算满减最优规则
-     * @param totalAmount
      * @param activityRuleList //该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
      */
     private ActivityRule computeFullReduction(BigDecimal totalAmount, List<ActivityRule> activityRuleList) {
@@ -307,25 +302,23 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
             optimalActivityRule.setReduceAmount(new BigDecimal("0"));
             optimalActivityRule.setSelectType(1);
 
-            StringBuffer ruleDesc = new StringBuffer()
-                    .append("满")
-                    .append(optimalActivityRule.getConditionAmount())
-                    .append("元减")
-                    .append(optimalActivityRule.getBenefitAmount())
-                    .append("元，还差")
-                    .append(totalAmount.subtract(optimalActivityRule.getConditionAmount()))
-                    .append("元");
-            optimalActivityRule.setRuleDesc(ruleDesc.toString());
+            String ruleDesc = "满" +
+                    optimalActivityRule.getConditionAmount() +
+                    "元减" +
+                    optimalActivityRule.getBenefitAmount() +
+                    "元，还差" +
+                    totalAmount.subtract(optimalActivityRule.getConditionAmount()) +
+                    "元";
+            optimalActivityRule.setRuleDesc(ruleDesc);
         } else {
-            StringBuffer ruleDesc = new StringBuffer()
-                    .append("满")
-                    .append(optimalActivityRule.getConditionAmount())
-                    .append("元减")
-                    .append(optimalActivityRule.getBenefitAmount())
-                    .append("元，已减")
-                    .append(optimalActivityRule.getReduceAmount())
-                    .append("元");
-            optimalActivityRule.setRuleDesc(ruleDesc.toString());
+            String ruleDesc = "满" +
+                    optimalActivityRule.getConditionAmount() +
+                    "元减" +
+                    optimalActivityRule.getBenefitAmount() +
+                    "元，已减" +
+                    optimalActivityRule.getReduceAmount() +
+                    "元";
+            optimalActivityRule.setRuleDesc(ruleDesc);
             optimalActivityRule.setSelectType(2);
         }
         return optimalActivityRule;
@@ -335,7 +328,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         BigDecimal total = new BigDecimal("0");
         for (CartInfo cartInfo : cartInfoList) {
             //是否选中
-            if(cartInfo.getIsChecked().intValue() == 1) {
+            if(cartInfo.getIsChecked() == 1) {
                 BigDecimal itemTotal = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
                 total = total.add(itemTotal);
             }
@@ -347,7 +340,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         int total = 0;
         for (CartInfo cartInfo : cartInfoList) {
             //是否选中
-            if(cartInfo.getIsChecked().intValue() == 1) {
+            if(cartInfo.getIsChecked() == 1) {
                 total += cartInfo.getSkuNum();
             }
         }
@@ -363,7 +356,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         List<ActivityInfo> activityInfoList = activityInfoPage.getRecords();
         //遍历activityInfoList集合，得到每个ActivityInfo对象，
         // 向ActivityInfo对象封装活动类型到activityTypeString属性里面
-        activityInfoList.stream().forEach(item -> {
+        activityInfoList.forEach(item -> {
             item.setActivityTypeString(item.getActivityType().getComment());
         });
         return activityInfoPage;
@@ -485,7 +478,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
     //构造规则名称的方法
     private String getRuleDesc(ActivityRule activityRule) {
         ActivityType activityType = activityRule.getActivityType();
-        StringBuffer ruleDesc = new StringBuffer();
+        StringBuilder ruleDesc = new StringBuilder();
         if (activityType == ActivityType.FULL_REDUCTION) {
             ruleDesc
                     .append("满")

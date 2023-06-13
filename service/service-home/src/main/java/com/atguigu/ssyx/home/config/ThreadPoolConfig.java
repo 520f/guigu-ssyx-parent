@@ -13,7 +13,7 @@ public class ThreadPoolConfig {
 
     @Bean
     public ThreadPoolExecutor threadPoolExecutor() {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+        return new ThreadPoolExecutor(
                 2,
                 5,
                 2,
@@ -22,6 +22,5 @@ public class ThreadPoolConfig {
                 Executors.defaultThreadFactory(),
                 new ThreadPoolExecutor.AbortPolicy()
         );
-        return executor;
     }
 }

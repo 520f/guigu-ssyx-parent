@@ -3,6 +3,7 @@ package com.atguigu.ssyx.order.receiver;
 import com.atguigu.ssyx.mq.constant.MqConst;
 import com.atguigu.ssyx.order.service.OrderInfoService;
 import com.rabbitmq.client.Channel;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
@@ -10,7 +11,6 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 
@@ -29,7 +29,7 @@ public class OrderReceiver {
     public void orderPay(String orderNo,
                          Message message,
                          Channel channel) throws IOException {
-        if(!StringUtils.isEmpty(orderNo)) {
+        if(StringUtils.isNotEmpty(orderNo)) {
             orderInfoService.orderPay(orderNo);
         }
         channel.basicAck(message.getMessageProperties().getDeliveryTag(),

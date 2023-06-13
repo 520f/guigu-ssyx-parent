@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.WeakHashMap;
 
 /**
  * <p>
@@ -26,7 +25,6 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr> implements At
     public List<Attr> getAttrListByGroupId(Long groupId) {
         LambdaQueryWrapper<Attr> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Attr::getAttrGroupId,groupId);
-        List<Attr> list = baseMapper.selectList(wrapper);
-        return list;
+        return baseMapper.selectList(wrapper);
     }
 }

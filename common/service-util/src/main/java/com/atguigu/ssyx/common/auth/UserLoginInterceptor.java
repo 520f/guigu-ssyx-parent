@@ -3,16 +3,16 @@ package com.atguigu.ssyx.common.auth;
 import com.atguigu.ssyx.common.constant.RedisConst;
 import com.atguigu.ssyx.common.utils.JwtHelper;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public class UserLoginInterceptor implements HandlerInterceptor {
 
-    private RedisTemplate redisTemplate;
+    private final RedisTemplate redisTemplate;
     public UserLoginInterceptor(RedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }

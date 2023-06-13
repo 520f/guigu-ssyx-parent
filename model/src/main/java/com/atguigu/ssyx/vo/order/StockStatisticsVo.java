@@ -1,21 +1,21 @@
 package com.atguigu.ssyx.vo.order;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 @Data
 public class StockStatisticsVo implements Serializable {
 
-    @ApiModelProperty(value = "skuId")
+    @Schema(name = "skuId")
     private Long skuId;
 
-    @ApiModelProperty(value = "销售价格")
+    @Schema(name = "销售价格")
     private String price;
 
-    @ApiModelProperty(value = "销量")
+    @Schema(name = "销量")
     @TableField("sale")
     private Integer sale;
 }

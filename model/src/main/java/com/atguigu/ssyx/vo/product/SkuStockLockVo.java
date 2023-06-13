@@ -1,20 +1,20 @@
 package com.atguigu.ssyx.vo.product;
 
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 import java.io.Serializable;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 @Data
 public class SkuStockLockVo implements Serializable {
 
-	@ApiModelProperty(value = "skuId")
+	@Schema(name = "skuId")
 	private Long skuId;
 
-	@ApiModelProperty(value = "sku个数")
+	@Schema(name = "sku个数")
 	private Integer skuNum;
 
-	@ApiModelProperty(value = "是否锁定")
+	@Schema(name = "是否锁定")
 	private Boolean isLock = false;
 }
 

@@ -30,6 +30,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -37,7 +38,6 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -91,7 +91,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         List<CartInfo> cartInfoList = cartFeignClient.getCartCheckedList(userId);
 
         //唯一标识订单
-        String orderNo = System.currentTimeMillis()+ "";
+        String orderNo = String.valueOf(System.currentTimeMillis());
         redisTemplate.opsForValue().set(RedisConst.ORDER_REPEAT+orderNo,orderNo,
                 24, TimeUnit.HOURS);
 
@@ -128,7 +128,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                         .execute(new DefaultRedisScript(script, Boolean.class),
                                     Arrays.asList(RedisConst.ORDER_REPEAT + orderNo), orderNo);
         //4 如果redis没有相同orderNo，表示重复提交了，不能再往后进行
-        if(!flag) {
+        if(Boolean.FALSE.equals(flag)) {
             throw new SsyxException(ResultCodeEnum.REPEAT_SUBMIT);
         }
 
@@ -142,8 +142,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         //2、购物车有很多商品，商品不同类型，重点处理普通类型商品
         List<CartInfo> commonSkuList = cartInfoList.stream()
-                .filter(cartInfo -> cartInfo.getSkuType() == SkuType.COMMON.getCode())
-                .collect(Collectors.toList());
+                .filter(cartInfo -> Objects.equals(cartInfo.getSkuType(), SkuType.COMMON.getCode()))
+                .toList();
 
         //3、把获取购物车里面普通类型商品list集合，
         // List<CartInfo>转换List<SkuStockLockVo>
@@ -204,7 +204,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             OrderItem orderItem = new OrderItem();
             orderItem.setId(null);
             orderItem.setCategoryId(cartInfo.getCategoryId());
-            if(cartInfo.getSkuType() == SkuType.COMMON.getCode()) {
+            if(Objects.equals(cartInfo.getSkuType(), SkuType.COMMON.getCode())) {
                 orderItem.setSkuType(SkuType.COMMON);
             } else {
                 orderItem.setSkuType(SkuType.SECKILL);
@@ -242,11 +242,16 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         //封装订单OrderInfo数据
         OrderInfo orderInfo = new OrderInfo();
-        orderInfo.setUserId(userId);//用户id
-        orderInfo.setOrderNo(orderParamVo.getOrderNo()); //订单号 唯一标识
-        orderInfo.setOrderStatus(OrderStatus.UNPAID); //订单状态，生成成功未支付
-        orderInfo.setLeaderId(orderParamVo.getLeaderId());//团长id
-        orderInfo.setLeaderName(leaderAddressVo.getLeaderName());//团长名称
+        //用户id
+        orderInfo.setUserId(userId);
+        //订单号 唯一标识
+        orderInfo.setOrderNo(orderParamVo.getOrderNo());
+        //订单状态，生成成功未支付
+        orderInfo.setOrderStatus(OrderStatus.UNPAID);
+        //团长id
+        orderInfo.setLeaderId(orderParamVo.getLeaderId());
+        //团长名称
+        orderInfo.setLeaderName(leaderAddressVo.getLeaderName());
 
         orderInfo.setLeaderPhone(leaderAddressVo.getLeaderPhone());
         orderInfo.setTakeName(leaderAddressVo.getTakeName());
@@ -329,11 +334,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     //根据orderNo查询订单信息
     @Override
     public OrderInfo getOrderInfoByOrderNo(String orderNo) {
-        OrderInfo orderInfo = baseMapper.selectOne(
+        return baseMapper.selectOne(
                 new LambdaQueryWrapper<OrderInfo>()
                         .eq(OrderInfo::getOrderNo, orderNo)
         );
-        return orderInfo;
     }
 
     //订单支付成功，更新订单状态，扣减库存
@@ -400,8 +404,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
      * 计算购物项分摊的优惠减少金额
      * 打折：按折扣分担
      * 现金：按比例分摊
-     * @param cartInfoParamList
-     * @return
      */
     private Map<String, BigDecimal> computeActivitySplitAmount(List<CartInfo> cartInfoParamList) {
         Map<String, BigDecimal> activitySplitAmountMap = new HashMap<>();

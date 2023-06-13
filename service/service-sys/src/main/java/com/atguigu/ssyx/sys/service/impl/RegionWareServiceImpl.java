@@ -10,8 +10,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -33,18 +33,15 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
 
         //2 判断条件值是否为空，不为空封装条件
         LambdaQueryWrapper<RegionWare> wrapper = new LambdaQueryWrapper<>();
-        if(!StringUtils.isEmpty(keyword)) {
-            //封装条件
-            //根据区域名称 或者 仓库名称查询
-            wrapper.like(RegionWare::getRegionName,keyword)
-                    .or().like(RegionWare::getWareName,keyword);
-        }
+        //封装条件
+        //根据区域名称 或者 仓库名称查询
+        wrapper.like(StringUtils.isNotEmpty(keyword),RegionWare::getRegionName,keyword)
+                .or().like(RegionWare::getWareName,keyword);
 
         //3 调用方法实现条件分页查询
-        IPage<RegionWare> regionWarePage = baseMapper.selectPage(pageParam, wrapper);
 
         //4 数据返回
-        return regionWarePage;
+        return baseMapper.selectPage(pageParam, wrapper);
     }
 
     //添加开通区域
@@ -53,8 +50,9 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
         //判断区域是否已经开通了
         LambdaQueryWrapper<RegionWare> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(RegionWare::getRegionId,regionWare.getRegionId());
-        Integer count = baseMapper.selectCount(wrapper);
-        if(count > 0) { //已经存在
+        Long count = baseMapper.selectCount(wrapper);
+        //已经存在
+        if(count > 0) {
             //抛出自定义异常
             throw new SsyxException(ResultCodeEnum.REGION_OPEN);
         }

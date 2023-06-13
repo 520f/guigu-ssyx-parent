@@ -1,16 +1,15 @@
 package com.atguigu.ssyx.vo.activity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import java.util.Date;
-import io.swagger.annotations.ApiModelProperty;
 
 @Data
 public class SeckillQueryVo {
 	
-	@ApiModelProperty(value = "活动标题")
+	@Schema(name = "活动标题")
 	private String title;
 
-	@ApiModelProperty(value = "上下线状态")
+	@Schema(name = "上下线状态")
 	private Integer status;
 
 

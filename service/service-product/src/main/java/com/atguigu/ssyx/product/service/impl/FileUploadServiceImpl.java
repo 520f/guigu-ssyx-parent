@@ -66,8 +66,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             System.out.println(result.getResponse().getErrorResponseAsString());
             System.out.println(result.getResponse().getUri());
             //返回上传图片在阿里云路径
-            String url = result.getResponse().getUri();
-            return url;
+            return result.getResponse().getUri();
         } catch (Exception ce) {
             System.out.println("Error Message:" + ce.getMessage());
         } finally {

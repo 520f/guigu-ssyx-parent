@@ -24,25 +24,24 @@ public class SkuApiController {
 
     //查询分类商品
     @GetMapping("{page}/{limit}")
-    public Result listSku(@PathVariable Integer page,
+    public Result<Page<SkuEs>> listSku(@PathVariable Integer page,
                           @PathVariable Integer limit,
                           SkuEsQueryVo skuEsQueryVo) {
         //创建pageable对象，0代表第一页
         Pageable pageable = PageRequest.of(page-1,limit);
-        Page<SkuEs> pageModel = skuService.search(pageable,skuEsQueryVo);
-        return Result.ok(pageModel);
+        return Result.ok(skuService.search(pageable,skuEsQueryVo));
     }
 
     //上架
     @GetMapping("inner/upperSku/{skuId}")
-    public Result upperSku(@PathVariable Long skuId) {
+    public Result<Boolean> upperSku(@PathVariable Long skuId) {
         skuService.upperSku(skuId);
         return Result.ok(null);
     }
 
     //下架
     @GetMapping("inner/lowerSku/{skuId}")
-    public Result lowerSku(@PathVariable Long skuId) {
+    public Result<Boolean> lowerSku(@PathVariable Long skuId) {
         skuService.lowerSku(skuId);
         return Result.ok(null);
     }

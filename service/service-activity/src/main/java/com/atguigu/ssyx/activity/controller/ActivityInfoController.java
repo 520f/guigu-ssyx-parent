@@ -1,6 +1,5 @@
 package com.atguigu.ssyx.activity.controller;
 
-
 import com.atguigu.ssyx.activity.service.ActivityInfoService;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.model.activity.ActivityInfo;
@@ -8,7 +7,6 @@ import com.atguigu.ssyx.model.product.SkuInfo;
 import com.atguigu.ssyx.vo.activity.ActivityRuleVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,18 +33,16 @@ public class ActivityInfoController {
 //    url: `${api_name}/${page}/${limit}`,
 //    method: 'get'
     @GetMapping("{page}/{limit}")
-    public Result list(@PathVariable Long page,
+    public Result<IPage<ActivityInfo>> list(@PathVariable Long page,
                        @PathVariable Long limit) {
         Page<ActivityInfo> pageParam = new Page<>(page,limit);
-        IPage<ActivityInfo> pageModel =
-                activityInfoService.selectPage(pageParam);
-        return Result.ok(pageModel);
+        return Result.ok(activityInfoService.selectPage(pageParam));
     }
 
 //    url: `${api_name}/get/${id}`,
 //    method: 'get'
     @GetMapping("get/{id}")
-    public Result get(@PathVariable Long id) {
+    public Result<ActivityInfo> get(@PathVariable Long id) {
         ActivityInfo activityInfo = activityInfoService.getById(id);
         activityInfo.setActivityTypeString(activityInfo.getActivityType().getComment());
         return Result.ok(activityInfo);
@@ -57,7 +53,7 @@ public class ActivityInfoController {
 //    method: 'post',
 //    data: role
     @PostMapping("save")
-    public Result save(@RequestBody ActivityInfo activityInfo) {
+    public Result<Boolean> save(@RequestBody ActivityInfo activityInfo) {
         activityInfoService.save(activityInfo);
         return Result.ok(null);
     }
@@ -67,10 +63,8 @@ public class ActivityInfoController {
 //    url: `${api_name}/findActivityRuleList/${id}`,
 //    method: 'get'
     @GetMapping("findActivityRuleList/{id}")
-    public Result findActivityRuleList(@PathVariable Long id) {
-        Map<String,Object> activityRuleMap =
-                activityInfoService.findActivityRuleList(id);
-        return Result.ok(activityRuleMap);
+    public Result<Map<String,Object>> findActivityRuleList(@PathVariable Long id) {
+        return Result.ok(activityInfoService.findActivityRuleList(id));
     }
 
     //2 在活动里面添加规则数据
@@ -78,7 +72,7 @@ public class ActivityInfoController {
 //    method: 'post',
 //    data: rule
     @PostMapping("saveActivityRule")
-    public Result saveActivityRule(@RequestBody ActivityRuleVo activityRuleVo) {
+    public Result<Boolean> saveActivityRule(@RequestBody ActivityRuleVo activityRuleVo) {
         activityInfoService.saveActivityRule(activityRuleVo);
         return Result.ok(null);
     }
@@ -87,10 +81,8 @@ public class ActivityInfoController {
 //    url: `${api_name}/findSkuInfoByKeyword/${keyword}`,
 //    method: 'get'
     @GetMapping("findSkuInfoByKeyword/{keyword}")
-    public Result findSkuInfoByKeyword(@PathVariable("keyword") String keyword) {
-        List<SkuInfo> list =
-                activityInfoService.findSkuInfoByKeyword(keyword);
-        return Result.ok(list);
+    public Result<List<SkuInfo>> findSkuInfoByKeyword(@PathVariable("keyword") String keyword) {
+        return Result.ok(activityInfoService.findSkuInfoByKeyword(keyword));
     }
 
 }

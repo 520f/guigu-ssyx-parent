@@ -3,7 +3,6 @@ package com.atguigu.ssyx.cart.receiver;
 import com.atguigu.ssyx.cart.service.CartInfoService;
 import com.atguigu.ssyx.mq.constant.MqConst;
 import com.rabbitmq.client.Channel;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;

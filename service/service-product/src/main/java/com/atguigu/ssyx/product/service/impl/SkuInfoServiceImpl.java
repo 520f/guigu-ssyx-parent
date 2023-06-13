@@ -18,10 +18,10 @@ import com.atguigu.ssyx.vo.product.SkuInfoQueryVo;
 import com.atguigu.ssyx.vo.product.SkuInfoVo;
 import com.atguigu.ssyx.vo.product.SkuStockLockVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -29,9 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -220,17 +218,15 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
     //根据skuId列表得到sku信息列表
     @Override
     public List<SkuInfo> findSkuInfoList(List<Long> skuIdList) {
-        List<SkuInfo> skuInfoList = baseMapper.selectBatchIds(skuIdList);
-        return skuInfoList;
+        return baseMapper.selectBatchIds(skuIdList);
     }
 
     //根据关键字匹配sku列表
     @Override
     public List<SkuInfo> findSkuInfoByKeyword(String keyword) {
-        List<SkuInfo> skuInfoList = baseMapper.selectList(
+        return baseMapper.selectList(
                 new LambdaQueryWrapper<SkuInfo>().like(SkuInfo::getSkuName, keyword)
         );
-        return skuInfoList;
     }
 
     //获取新人专享商品
@@ -248,8 +244,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         wrapper.orderByDesc(SkuInfo::getStock);//库存排序
         //调用方法查询
         IPage<SkuInfo> skuInfoPage = baseMapper.selectPage(pageParam, wrapper);
-        List<SkuInfo> skuInfoList = skuInfoPage.getRecords();
-        return skuInfoList;
+        return skuInfoPage.getRecords();
     }
 
     //根据skuId获取sku信息
@@ -288,9 +283,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         }
 
         //2 遍历skuStockLockVoList得到每个商品，验证库存并锁定库存，具备原子性
-        skuStockLockVoList.stream().forEach(skuStockLockVo -> {
-            this.checkLock(skuStockLockVo);
-        });
+        skuStockLockVoList.forEach(this::checkLock);
 
         //3 只要有一个商品锁定失败，所有锁定成功的商品都解锁
         boolean flag = skuStockLockVoList.stream()
@@ -370,17 +363,10 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         String skuType = skuInfoQueryVo.getSkuType();
 
         LambdaQueryWrapper<SkuInfo> wrapper = new LambdaQueryWrapper<>();
-        if(!StringUtils.isEmpty(keyword)) {
-            wrapper.like(SkuInfo::getSkuName,keyword);
-        }
-        if(!StringUtils.isEmpty(categoryId)) {
-            wrapper.eq(SkuInfo::getCategoryId,categoryId);
-        }
-        if(!StringUtils.isEmpty(skuType)) {
-            wrapper.like(SkuInfo::getSkuType,skuType);
-        }
-        IPage<SkuInfo> pageModel = baseMapper.selectPage(pageParam,wrapper);
-        return pageModel;
+        wrapper.like(StringUtils.isNotEmpty(keyword),SkuInfo::getSkuName,keyword);
+        wrapper.eq(null!=categoryId,SkuInfo::getCategoryId,categoryId);
+        wrapper.like(StringUtils.isNotEmpty(skuType),SkuInfo::getSkuType,skuType);
+        return baseMapper.selectPage(pageParam,wrapper);
     }
 
 }

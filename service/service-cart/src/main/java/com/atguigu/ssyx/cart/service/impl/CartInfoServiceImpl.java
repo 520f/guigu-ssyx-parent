@@ -8,16 +8,13 @@ import com.atguigu.ssyx.common.result.ResultCodeEnum;
 import com.atguigu.ssyx.enums.SkuType;
 import com.atguigu.ssyx.model.order.CartInfo;
 import com.atguigu.ssyx.model.product.SkuInfo;
-import org.checkerframework.checker.units.qual.A;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
+import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -52,11 +49,14 @@ public class CartInfoServiceImpl implements CartInfoService {
         CartInfo cartInfo = null;
         //目的：判断是否是第一次添加这个商品到购物车
         // 进行判断，判断结果里面，是否有skuId
-        if(hashOperations.hasKey(skuId.toString())) {
+        if(Boolean.TRUE.equals(hashOperations.hasKey(skuId.toString()))) {
             //3 如果结果里面包含skuId，不是第一次添加
             //3.1 根据skuId，获取对应数量，更新数量
             cartInfo = hashOperations.get(skuId.toString());
             //把购物车存在商品之前数量获取数量，在进行数量更新操作
+            if(cartInfo==null) {
+                return;
+            }
             Integer currentSkuNum = cartInfo.getSkuNum() + skuNum;
             if(currentSkuNum < 1) {
                 return;
@@ -117,9 +117,9 @@ public class CartInfoServiceImpl implements CartInfoService {
     //根据skuId删除购物车
     @Override
     public void deleteCart(Long skuId, Long userId) {
-        BoundHashOperations<String,String,CartInfo> hashOperations =
+        BoundHashOperations hashOperations =
                 redisTemplate.boundHashOps(this.getCartKey(userId));
-        if(hashOperations.hasKey(skuId.toString())) {
+        if(Boolean.TRUE.equals(hashOperations.hasKey(skuId.toString()))) {
             hashOperations.delete(skuId.toString());
         }
     }
@@ -131,6 +131,9 @@ public class CartInfoServiceImpl implements CartInfoService {
         BoundHashOperations<String,String,CartInfo> hashOperations =
                 redisTemplate.boundHashOps(cartKey);
         List<CartInfo> cartInfoList = hashOperations.values();
+        if (CollectionUtils.isEmpty(cartInfoList)){
+            return;
+        }
         for (CartInfo cartInfo:cartInfoList) {
             hashOperations.delete(cartInfo.getSkuId().toString());
         }
@@ -152,7 +155,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     public List<CartInfo> getCartList(Long userId) {
         //判断userId
         List<CartInfo> cartInfoList = new ArrayList<>();
-        if(StringUtils.isEmpty(userId)) {
+        if(ObjectUtils.isEmpty(userId)) {
             return cartInfoList;
         }
         //从redis获取购物车数据
@@ -198,6 +201,9 @@ public class CartInfoServiceImpl implements CartInfoService {
         BoundHashOperations<String,String,CartInfo> boundHashOperations =
                 redisTemplate.boundHashOps(cartKey);
         List<CartInfo> cartInfoList = boundHashOperations.values();
+        if (CollectionUtils.isEmpty(cartInfoList)){
+            return;
+        }
         cartInfoList.forEach(cartInfo -> {
             cartInfo.setIsChecked(isChecked);
             boundHashOperations.put(cartInfo.getSkuId().toString(),cartInfo);
@@ -243,7 +249,7 @@ public class CartInfoServiceImpl implements CartInfoService {
         List<CartInfo> cartInfoList = this.getCartCheckedList(userId);
 
         //查询list数据处理，得到skuId集合
-        List<Long> skuIdList = cartInfoList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<Long> skuIdList = cartInfoList.stream().map(CartInfo::getSkuId).toList();
 
         //构建redis的key值
         // hash类型 key filed-value

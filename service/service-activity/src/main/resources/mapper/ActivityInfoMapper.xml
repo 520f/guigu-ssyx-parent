@@ -60,7 +60,7 @@
     </select>
 
     <!--// 如果之前参加过，活动正在进行中，排除商品-->
-    <select id="selectSkuIdListExist" resultType="Long">
+    <select id="selectSkuIdListExist" resultType="java.lang.Long">
         select sku.sku_id
         from activity_info info
         inner join activity_sku sku on info.id = sku.activity_id

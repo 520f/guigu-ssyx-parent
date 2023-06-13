@@ -8,8 +8,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -28,10 +28,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
                                               CategoryQueryVo categoryQueryVo) {
         String name = categoryQueryVo.getName();
         LambdaQueryWrapper<Category> wrapper = new LambdaQueryWrapper<>();
-        if(!StringUtils.isEmpty(name)) {
-            wrapper.like(Category::getName,name);
-        }
-        IPage<Category> categoryPage = baseMapper.selectPage(pageParam, wrapper);
-        return categoryPage;
+        wrapper.like(StringUtils.isNotEmpty(name),Category::getName,name);
+        return baseMapper.selectPage(pageParam, wrapper);
     }
 }

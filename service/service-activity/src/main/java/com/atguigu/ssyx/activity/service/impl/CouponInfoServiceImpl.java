@@ -10,6 +10,7 @@ import com.atguigu.ssyx.activity.mapper.CouponInfoMapper;
 import com.atguigu.ssyx.activity.service.CouponInfoService;
 import com.atguigu.ssyx.model.activity.CouponRange;
 import com.atguigu.ssyx.model.activity.CouponUse;
+import com.atguigu.ssyx.model.base.BaseEntity;
 import com.atguigu.ssyx.model.order.CartInfo;
 import com.atguigu.ssyx.model.product.Category;
 import com.atguigu.ssyx.model.product.SkuInfo;
@@ -53,10 +54,9 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
 
         //根据条件查询：skuId + 分类id + userId
-        List<CouponInfo> couponInfoList = baseMapper.selectCouponInfoList(skuInfo.getId(),
-                skuInfo.getCategoryId(),userId);
 
-        return couponInfoList;
+        return baseMapper.selectCouponInfoList(skuInfo.getId(),
+                skuInfo.getCategoryId(),userId);
     }
 
     //3 获取购物车可以使用优惠卷列表
@@ -68,11 +68,11 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         List<CouponInfo> userAllCouponInfoList =
                 baseMapper.selectCartCouponInfoList(userId);
         if(CollectionUtils.isEmpty(userAllCouponInfoList)) {
-            return new ArrayList<CouponInfo>();
+            return new ArrayList<>();
         }
 
         //2 从第一步返回list集合中，获取所有优惠卷id列表
-        List<Long> couponIdList = userAllCouponInfoList.stream().map(couponInfo -> couponInfo.getId())
+        List<Long> couponIdList = userAllCouponInfoList.stream().map(BaseEntity::getId)
                 .collect(Collectors.toList());
 
         //3 查询优惠卷对应的范围  coupon_range
@@ -115,7 +115,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
                     couponInfo.setIsSelect(1);
                 }
             }
-            if (couponInfo.getIsSelect().intValue() == 1 && couponInfo.getAmount().subtract(reduceAmount).doubleValue() > 0) {
+            if (couponInfo.getIsSelect() == 1 && couponInfo.getAmount().subtract(reduceAmount).doubleValue() > 0) {
                 reduceAmount = couponInfo.getAmount();
                 optimalCouponInfo = couponInfo;
             }
@@ -173,7 +173,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         BigDecimal total = new BigDecimal("0");
         for (CartInfo cartInfo : cartInfoList) {
             //是否选中
-            if(cartInfo.getIsChecked().intValue() == 1) {
+            if(cartInfo.getIsChecked() == 1) {
                 BigDecimal itemTotal = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
                 total = total.add(itemTotal);
             }
@@ -191,34 +191,29 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         //couponRangeList数据处理，根据优惠卷id分组
         Map<Long, List<CouponRange>> couponRangeToRangeListMap = couponRangeList.stream()
                 .collect(
-                        Collectors.groupingBy(couponRange -> couponRange.getCouponId())
+                        Collectors.groupingBy(CouponRange::getCouponId)
                 );
 
         //遍历map集合
-        Iterator<Map.Entry<Long, List<CouponRange>>> iterator =
-                couponRangeToRangeListMap.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Long, List<CouponRange>> entry = iterator.next();
+        for (Map.Entry<Long, List<CouponRange>> entry : couponRangeToRangeListMap.entrySet()) {
             Long couponId = entry.getKey();
             List<CouponRange> rangeList = entry.getValue();
 
             //创建集合 set
             Set<Long> skuIdSet = new HashSet<>();
-            for (CartInfo cartInfo:cartInfoList) {
-                for (CouponRange couponRange:rangeList) {
+            for (CartInfo cartInfo : cartInfoList) {
+                for (CouponRange couponRange : rangeList) {
                     //判断
-                    if(couponRange.getRangeType() == CouponRangeType.SKU
-                       && couponRange.getRangeId().longValue() == cartInfo.getSkuId().longValue()) {
+                    if (couponRange.getRangeType() == CouponRangeType.SKU
+                            && couponRange.getRangeId().longValue() == cartInfo.getSkuId().longValue()) {
                         skuIdSet.add(cartInfo.getSkuId());
-                    } else if(couponRange.getRangeType() == CouponRangeType.CATEGORY
-                     && couponRange.getRangeId().longValue() == cartInfo.getCategoryId().longValue()) {
+                    } else if (couponRange.getRangeType() == CouponRangeType.CATEGORY
+                            && couponRange.getRangeId().longValue() == cartInfo.getCategoryId().longValue()) {
                         skuIdSet.add(cartInfo.getSkuId());
-                    } else {
-
                     }
                 }
             }
-            couponIdToSkuIdMap.put(couponId,new ArrayList<>(skuIdSet));
+            couponIdToSkuIdMap.put(couponId, new ArrayList<>(skuIdSet));
         }
         return couponIdToSkuIdMap;
     }
@@ -229,7 +224,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         Page<CouponInfo> pageParam = new Page<>(page,limit);
         IPage<CouponInfo> couponInfoPage = baseMapper.selectPage(pageParam, null);
         List<CouponInfo> couponInfoList = couponInfoPage.getRecords();
-        couponInfoList.stream().forEach(item -> {
+        couponInfoList.forEach(item -> {
             item.setCouponTypeString(item.getCouponType().getComment());
             CouponRangeType rangeType = item.getRangeType();
             if(rangeType != null) {
@@ -266,7 +261,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         List<Long> randIdList =
                 couponRangeList.stream().map(CouponRange::getRangeId).collect(Collectors.toList());
 
-        Map<String,Object> result = new HashMap();
+        Map<String,Object> result = new HashMap<>();
         //第三步 分别判断封装不同数据
         if(!CollectionUtils.isEmpty(randIdList)) {
             if(couponInfo.getRangeType() == CouponRangeType.SKU) {
