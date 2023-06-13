@@ -1,12 +1,12 @@
 package com.atguigu.ssyx.user.controller;
 
+import cn.dev33.satoken.stp.SaTokenInfo;
+import cn.dev33.satoken.stp.StpUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.atguigu.ssyx.common.auth.AuthContextHolder;
-import com.atguigu.ssyx.common.constant.RedisConst;
 import com.atguigu.ssyx.common.exception.SsyxException;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.common.result.ResultCodeEnum;
-import com.atguigu.ssyx.common.utils.JwtHelper;
 import com.atguigu.ssyx.enums.UserType;
 import com.atguigu.ssyx.enums.user.User;
 import com.atguigu.ssyx.user.service.UserService;
@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/user/weixin")
@@ -88,19 +87,18 @@ public class WeixinApiController {
         //5 根据userId查询提货点和团长信息
         ////提货点  user表  user_delivery表
         ////团长    leader表
-        LeaderAddressVo leaderAddressVo =
-                userService.getLeaderAddressByUserId(user.getId());
+        LeaderAddressVo leaderAddressVo =userService.getLeaderAddressByUserId(user.getId());
 
-        //6 使用JWT工具根据userId和userName生成token字符串
-        String token = JwtHelper.createToken(user.getId(), user.getNickName());
+        //6 使用sa-token框架根据user.id生成token字符串
+        StpUtil.login(user.getId());
+        SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+        String token = tokenInfo.getTokenValue();
+
 
         //7 获取当前登录用户信息，放到Redis里面，设置有效时间
         UserLoginVo userLoginVo = userService.getUserLoginVo(user.getId());
-        redisTemplate.opsForValue()
-                .set(RedisConst.USER_LOGIN_KEY_PREFIX+user.getId(),
-                        userLoginVo,
-                        RedisConst.USERKEY_TIMEOUT,
-                        TimeUnit.DAYS);
+        tokenInfo.setLoginDevice("WX");
+        tokenInfo.setTag(JSON.toJSONString(userLoginVo));
 
         //8 需要数据封装到map返回
         Map<String,Object> map = new HashMap<>();
@@ -113,8 +111,9 @@ public class WeixinApiController {
     @PostMapping("/auth/updateUser")
     @Operation(description = "更新用户昵称与头像")
     public Result<Boolean> updateUser(@RequestBody User user) {
+        Long userId = StpUtil.getLoginId(-1L);
         //获取当前登录用户id
-        User user1 = userService.getById(AuthContextHolder.getUserId());
+        User user1 = userService.getById(userId);
         //把昵称更新为微信用户
         user1.setNickName(user.getNickName().replaceAll("[ue000-uefff]", "*"));
         user1.setPhotoUrl(user.getPhotoUrl());

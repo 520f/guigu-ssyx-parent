@@ -40,3 +40,12 @@ spring:
         max-wait: -1    #最大阻塞等待时间(负数表示没限制)
         max-idle: 5    #最大空闲
         min-idle: 0     #最小空闲
+
+############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
+sa-token:
+  # token名称 (同时也是cookie名称)
+  token-name: token
+  # token风格
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: true

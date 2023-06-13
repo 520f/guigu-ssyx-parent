@@ -1,8 +1,9 @@
 package com.atguigu.ssyx.search.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
+import com.alibaba.fastjson.JSON;
 import com.atguigu.ssyx.activity.client.ActivityFeignClient;
 import com.atguigu.ssyx.client.product.ProductFeignClient;
-import com.atguigu.ssyx.common.auth.AuthContextHolder;
 import com.atguigu.ssyx.enums.SkuType;
 import com.atguigu.ssyx.model.product.Category;
 import com.atguigu.ssyx.model.product.SkuInfo;
@@ -10,6 +11,7 @@ import com.atguigu.ssyx.model.search.SkuEs;
 import com.atguigu.ssyx.search.repository.SkuRepository;
 import com.atguigu.ssyx.search.service.SkuService;
 import com.atguigu.ssyx.vo.search.SkuEsQueryVo;
+import com.atguigu.ssyx.vo.user.UserLoginVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -70,10 +72,13 @@ public class SkuServiceImpl implements SkuService {
     //查询分类商品
     @Override
     public Page<SkuEs> search(Pageable pageable, SkuEsQueryVo skuEsQueryVo) {
+        //TODO:待测试，理论上所有接口都需要token
+        UserLoginVo userLoginVo = JSON.parseObject(StpUtil.getTokenInfo().getTag(), UserLoginVo.class);
+        Long wareId = userLoginVo.getWareId();
         //1 向SkuEsQueryVo设置wareId，当前登录用户的仓库id
-        skuEsQueryVo.setWareId(AuthContextHolder.getWareId());
+        skuEsQueryVo.setWareId(wareId);
 
-        Page<SkuEs> pageModel = null;
+        Page<SkuEs> pageModel;
         //2 调用SkuRepository方法，根据springData命名规则定义方法，进行条件查询
         //// 判断keyword是否为空，如果为空 ，根据仓库id + 分类id查询
         String keyword = skuEsQueryVo.getKeyword();

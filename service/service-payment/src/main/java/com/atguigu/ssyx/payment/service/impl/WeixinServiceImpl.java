@@ -1,6 +1,7 @@
 package com.atguigu.ssyx.payment.service.impl;
 
-import com.atguigu.ssyx.common.constant.RedisConst;
+import cn.dev33.satoken.stp.StpUtil;
+import com.alibaba.fastjson.JSON;
 import com.atguigu.ssyx.model.order.PaymentInfo;
 import com.atguigu.ssyx.payment.service.PaymentInfoService;
 import com.atguigu.ssyx.payment.service.WeixinService;
@@ -10,7 +11,6 @@ import com.atguigu.ssyx.vo.user.UserLoginVo;
 import com.github.wxpay.sdk.WXPayUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,15 +24,11 @@ public class WeixinServiceImpl implements WeixinService {
     @Autowired
     private PaymentInfoService paymentInfoService;
 
-    @Autowired
-    private RedisTemplate redisTemplate;
-
     //调用微信支付系统生成预付单
     @Override
     public Map<String, String> createJsapi(String orderNo) {
         //1 向payment_info支付记录表添加记录，目前支付状态：正在支付中
-        PaymentInfo paymentInfo =
-                paymentInfoService.getPaymentInfoByOrderNo(orderNo);
+        PaymentInfo paymentInfo =paymentInfoService.getPaymentInfoByOrderNo(orderNo);
         if(paymentInfo == null) {
             paymentInfo = paymentInfoService.savePaymentInfo(orderNo);
         }
@@ -50,9 +46,9 @@ public class WeixinServiceImpl implements WeixinService {
         paramMap.put("notify_url", ConstantPropertiesUtils.NOTIFYURL);
         paramMap.put("trade_type", "JSAPI");
 
+        //TODO:待测试，理论上所有接口都需要token
         //openid
-        UserLoginVo userLoginVo = (UserLoginVo)redisTemplate.opsForValue()
-                .get(RedisConst.USER_LOGIN_KEY_PREFIX + paymentInfo.getUserId());
+        UserLoginVo userLoginVo = JSON.parseObject(StpUtil.getTokenInfo().getTag(),UserLoginVo.class);
         if(null != userLoginVo && StringUtils.isNotEmpty(userLoginVo.getOpenId())) {
             paramMap.put("openid", userLoginVo.getOpenId());
         } else {

@@ -1,6 +1,6 @@
 package com.atguigu.ssyx.home.controller;
 
-import com.atguigu.ssyx.common.auth.AuthContextHolder;
+import cn.dev33.satoken.stp.StpUtil;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.home.service.ItemService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,7 +22,7 @@ public class ItemApiController {
 
     @GetMapping("item/{id}")
     public Result<Map<String,Object>> index(@PathVariable Long id) {
-        Long userId = AuthContextHolder.getUserId();
+        Long userId = StpUtil.getLoginId(-1L);
         return Result.ok(itemService.item(id,userId));
     }
 }

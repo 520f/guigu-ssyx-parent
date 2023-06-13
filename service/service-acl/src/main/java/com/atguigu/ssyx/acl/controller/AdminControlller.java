@@ -2,8 +2,8 @@ package com.atguigu.ssyx.acl.controller;
 
 import com.atguigu.ssyx.acl.service.AdminService;
 import com.atguigu.ssyx.acl.service.RoleService;
+import com.atguigu.ssyx.acl.utils.MD5;
 import com.atguigu.ssyx.common.result.Result;
-import com.atguigu.ssyx.common.utils.MD5;
 import com.atguigu.ssyx.model.acl.Admin;
 import com.atguigu.ssyx.vo.acl.AdminQueryVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;

@@ -9,7 +9,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class) //异常处理器
+    //异常处理器
+    @ExceptionHandler(Exception.class)
     @ResponseBody  //返回json数据
     public Result<String> error(Exception e) {
         e.printStackTrace();

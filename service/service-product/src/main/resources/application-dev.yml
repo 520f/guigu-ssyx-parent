@@ -46,3 +46,12 @@ aliyun:
   keyid: LTAI5tK6q6QVDqZAY3mD4s9s
   keysecret: lCaDcmvm7AvfvJ2BhC6456lufHRFgM
   bucketname: ssyx-guigu
+
+############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
+sa-token:
+  # token名称 (同时也是cookie名称)
+  token-name: token
+  # token风格
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: true

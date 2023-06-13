@@ -37,3 +37,12 @@ wx:
     app_id: wxcc651fcbab275e33
     # 小程序微信公众平台api秘钥
     app_secret: 5f353399a2eae7ff6ceda383e924c5f6
+
+############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
+sa-token:
+  # token名称 (同时也是cookie名称)
+  token-name: token
+  # token风格
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: true

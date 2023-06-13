@@ -1,4 +1,4 @@
-package com.atguigu.ssyx.common.utils;
+package com.atguigu.ssyx.acl.utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

@@ -65,3 +65,12 @@ weixin:
   partnerkey: MXb72b9RfshXZD4FRGV5KLqmv5bx9LT9
   notifyurl: http://gmall-prod.atguigu.cn/api/payment/weixin/notify
   cert: C:\data\apiclient_cert.p12
+
+############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
+sa-token:
+  # token名称 (同时也是cookie名称)
+  token-name: token
+  # token风格
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: true

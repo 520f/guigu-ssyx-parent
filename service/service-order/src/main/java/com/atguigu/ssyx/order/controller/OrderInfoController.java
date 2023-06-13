@@ -1,6 +1,6 @@
 package com.atguigu.ssyx.order.controller;
 
-import com.atguigu.ssyx.common.auth.AuthContextHolder;
+import cn.dev33.satoken.stp.StpUtil;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.common.result.ResultCodeEnum;
 import com.atguigu.ssyx.model.order.OrderInfo;
@@ -42,7 +42,7 @@ public class OrderInfoController {
             @Parameter(name = "orderVo", description = "查询对象", required = false)
             OrderUserQueryVo orderUserQueryVo) {
         //获取userId
-        Long userId = AuthContextHolder.getUserId();
+        Long userId = StpUtil.getLoginId(-1L);
         orderUserQueryVo.setUserId(userId);
 
         //分页查询条件

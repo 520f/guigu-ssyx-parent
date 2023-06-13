@@ -1,14 +1,14 @@
 package com.atguigu.ssyx.order.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.date.DateUtil;
 import com.atguigu.ssyx.activity.client.ActivityFeignClient;
 import com.atguigu.ssyx.cart.client.CartFeignClient;
 import com.atguigu.ssyx.client.product.ProductFeignClient;
 import com.atguigu.ssyx.client.user.UserFeignClient;
-import com.atguigu.ssyx.common.auth.AuthContextHolder;
 import com.atguigu.ssyx.common.constant.RedisConst;
 import com.atguigu.ssyx.common.exception.SsyxException;
 import com.atguigu.ssyx.common.result.ResultCodeEnum;
-import com.atguigu.ssyx.common.utils.DateUtil;
 import com.atguigu.ssyx.enums.*;
 import com.atguigu.ssyx.model.activity.ActivityRule;
 import com.atguigu.ssyx.model.activity.CouponInfo;
@@ -81,11 +81,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     public OrderConfirmVo confirmOrder() {
         //获取用户id
-        Long userId = AuthContextHolder.getUserId();
+        Long userId = StpUtil.getLoginId(-1L);
 
         //获取用户对应团长信息
-        LeaderAddressVo leaderAddressVo =
-                userFeignClient.getUserAddressByUserId(userId);
+        LeaderAddressVo leaderAddressVo = userFeignClient.getUserAddressByUserId(userId);
 
         //获取购物车里面选中的商品
         List<CartInfo> cartInfoList = cartFeignClient.getCartCheckedList(userId);
@@ -109,7 +108,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     public Long submitOrder(OrderSubmitVo orderParamVo) {
         //第一步 设置给哪个用户生成订单  设置orderParamVo的userId
-        Long userId = AuthContextHolder.getUserId();
+        Long userId = StpUtil.getLoginId(-1L);
         orderParamVo.setUserId(userId);
 
         //第二步 订单不能重复提交，重复提交验证
@@ -187,7 +186,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
         }
         //查询用户提货点和团长信息
-        Long userId = AuthContextHolder.getUserId();
+        Long userId = StpUtil.getLoginId(-1L);
         LeaderAddressVo leaderAddressVo = userFeignClient.getUserAddressByUserId(userId);
         if(leaderAddressVo == null) {
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
@@ -309,9 +308,13 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 hashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
             }
         });
-        redisTemplate.expire(orderSkuKey, DateUtil.getCurrentExpireTimes(), TimeUnit.SECONDS);
+        redisTemplate.expire(orderSkuKey, getCurrentExpireTimes(), TimeUnit.SECONDS);
         //订单id
         return orderInfo.getId();
+    }
+
+    private long getCurrentExpireTimes() {
+        return DateUtil.endOfDay(new Date()).getTime()-System.currentTimeMillis();
     }
 
     //订单详情

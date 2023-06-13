@@ -1,11 +1,10 @@
 package com.atguigu.ssyx.home.controller;
 
-import com.atguigu.ssyx.common.auth.AuthContextHolder;
+import cn.dev33.satoken.stp.StpUtil;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.home.service.HomeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,8 +22,8 @@ public class HomeApiController {
 
     @Operation(description = "首页数据显示接口")
     @GetMapping("index")
-    public Result<Map<String,Object>> index(HttpServletRequest request) {
-        Long userId = AuthContextHolder.getUserId();
+    public Result<Map<String,Object>> index() {
+        Long userId = StpUtil.getLoginId(-1L);
         return Result.ok(homeService.homeData(userId));
     }
 
