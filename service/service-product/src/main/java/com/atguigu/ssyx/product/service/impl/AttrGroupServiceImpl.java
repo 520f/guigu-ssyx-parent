@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -27,19 +28,19 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
 
     //平台属性分组列表
     @Override
-    public IPage<AttrGroup> selectPageAttrGroup(Page<AttrGroup> pageParam, AttrGroupQueryVo attrGroupQueryVo) {
+    public Mono<IPage<AttrGroup>> selectPageAttrGroup(Page<AttrGroup> pageParam, AttrGroupQueryVo attrGroupQueryVo) {
         String name = attrGroupQueryVo.getName();
         LambdaQueryWrapper<AttrGroup> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.isNotEmpty(name),AttrGroup::getName,name);
-        return baseMapper.selectPage(pageParam,wrapper);
+        return Mono.just(baseMapper.selectPage(pageParam,wrapper));
     }
 
     //查询所有平台属性分组列表
     @Override
-    public List<AttrGroup> findAllListAttrGroup() {
+    public Mono<List<AttrGroup>> findAllListAttrGroup() {
        //LambdaQueryWrapper<AttrGroup> wrapper = new LambdaQueryWrapper<>();
         QueryWrapper<AttrGroup> wrapper = new QueryWrapper<>();
         wrapper.orderByDesc("id");
-        return baseMapper.selectList(wrapper);
+        return Mono.just(baseMapper.selectList(wrapper));
     }
 }

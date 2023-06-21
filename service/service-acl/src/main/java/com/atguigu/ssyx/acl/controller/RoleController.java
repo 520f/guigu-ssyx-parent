@@ -26,9 +26,7 @@ public class RoleController {
     //1 角色列表（条件分页查询）
     @Operation(description="角色条件分页查询")
     @GetMapping("{current}/{limit}")
-    public Result<IPage<Role>> pageList(@PathVariable Long current,
-                           @PathVariable Long limit,
-                           RoleQueryVo roleQueryVo) {
+    public Result<IPage<Role>> pageList(@PathVariable Long current,@PathVariable Long limit,RoleQueryVo roleQueryVo) {
         //1 创建page对象，传递当前页和每页记录数
         // current：当前页
         // limit: 每页显示记录数

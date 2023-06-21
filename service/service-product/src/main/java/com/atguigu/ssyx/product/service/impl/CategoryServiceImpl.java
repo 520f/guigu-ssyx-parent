@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -24,11 +25,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     //商品分类列表
     @Override
-    public IPage<Category> selectPageCategory(Page<Category> pageParam,
-                                              CategoryQueryVo categoryQueryVo) {
+    public Mono<IPage<Category>> selectPageCategory(Page<Category> pageParam,
+                                   CategoryQueryVo categoryQueryVo) {
         String name = categoryQueryVo.getName();
         LambdaQueryWrapper<Category> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.isNotEmpty(name),Category::getName,name);
-        return baseMapper.selectPage(pageParam, wrapper);
+        return Mono.just(baseMapper.selectPage(pageParam, wrapper));
     }
 }

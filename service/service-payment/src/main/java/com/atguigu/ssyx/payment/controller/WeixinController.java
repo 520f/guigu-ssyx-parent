@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Map;
 
@@ -26,30 +28,33 @@ public class WeixinController {
 
     //调用微信支付系统生成预付单
     @GetMapping("/createJsapi/{orderNo}")
-    public Result<Map<String,String>> createJsapi(@PathVariable("orderNo") String orderNo) {
-        return Result.ok(weixinService.createJsapi(orderNo));
+    public Mono<Result<Map<String, String>>> createJsapi(@PathVariable("orderNo") String orderNo) {
+        return weixinService.createJsapi(orderNo)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     //查询订单支付状态
     @GetMapping("/queryPayStatus/{orderNo}")
-    public Result<Object> queryPayStatus(@PathVariable("orderNo") String orderNo) {
+    public Mono<Result<Object>> queryPayStatus(@PathVariable("orderNo") String orderNo) {
         //1 调用微信支付系统接口查询订单支付状态
-        Map<String,String> resultMap = weixinService.queryPayStatus(orderNo);
+        return weixinService.queryPayStatus(orderNo).map(resultMap -> {
+            //2 微信支付系统返回值为null，支付失败
+            if (resultMap == null) {
+                return Result.build(null, ResultCodeEnum.PAYMENT_FAIL);
+            }
 
-        //2 微信支付系统返回值为null，支付失败
-        if(resultMap == null) {
-            return Result.build(null,ResultCodeEnum.PAYMENT_FAIL);
-        }
+            //3 如果微信支付系统返回值，判断支付成功
+            if ("SUCCESS".equals(resultMap.get("trade_state"))) {
+                String out_trade_no = resultMap.get("out_trade_no");
+                paymentInfoService.paySuccess(out_trade_no, resultMap);
+                return Result.ok(null);
+            }
 
-        //3 如果微信支付系统返回值，判断支付成功
-        if("SUCCESS".equals(resultMap.get("trade_state"))) {
-            String out_trade_no = resultMap.get("out_trade_no");
-            paymentInfoService.paySuccess(out_trade_no,resultMap);
-            return Result.ok(null);
-        }
-
-        //4 支付中，等待
-        return Result.build(null,ResultCodeEnum.PAYMENT_WAITING);
+            //4 支付中，等待
+            return Result.build(null, ResultCodeEnum.PAYMENT_WAITING);
+        }).subscribeOn(Schedulers.parallel());
     }
 
 }

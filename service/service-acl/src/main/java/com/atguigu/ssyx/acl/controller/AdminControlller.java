@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
@@ -29,106 +31,76 @@ public class AdminControlller {
     private RoleService roleService;
 
     //为用户进行分配
-//    url: `${api_name}/doAssign`,
-//    method: 'post',
-//    params: {
-//        adminId,
-//        roleId
-//    }
     //参数有用户id 和 多个角色id
     @Operation(description="为用户进行角色分配")
     @PostMapping("doAssign")
-    public Result<Object> doAssign(@RequestParam Long adminId,
-                           @RequestParam Long[] roleId) {
+    public Mono<Result<Object>> doAssign(@RequestParam Long adminId,
+                         @RequestParam Long[] roleId) {
         roleService.saveAdminRole(adminId,roleId);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
 
     //获取所有角色，和根据用户id查询用户分配角色列表
-//    url: `${api_name}/toAssign/${adminId}`,
-//    method: 'get'
     @Operation(description="获取用户角色")
     @GetMapping("toAssign/{adminId}")
-    public Result<Object> toAssign(@PathVariable Long adminId) {
+    public Mono<Result<Map<String, Object>>> toAssign(@PathVariable Long adminId) {
         //返回map集合包含两部分数据：所有角色 和 为用户分配角色列表
-       Map<String,Object> map  = roleService.getRoleByAdminId(adminId);
-       return Result.ok(map);
+        return roleService.getRoleByAdminId(adminId).map(Result::ok).subscribeOn(Schedulers.boundedElastic());
     }
 
     //1 用户列表
     @Operation(description="用户列表")
     @GetMapping("{current}/{limit}")
-    public Result<Object> list(@PathVariable Long current,
-                       @PathVariable Long limit,
-                       AdminQueryVo adminQueryVo) {
+    public Mono<Result<IPage<Admin>>> list(@PathVariable Long current,@PathVariable Long limit, AdminQueryVo adminQueryVo) {
         Page<Admin> pageParam = new Page<Admin>(current,limit);
-        IPage<Admin> pageModel = adminService.selectPageUser(pageParam,adminQueryVo);
-        return Result.ok(pageModel);
+        return adminService.selectPageUser(pageParam, adminQueryVo).map(Result::ok).subscribeOn(Schedulers.boundedElastic());
     }
 
     //2 id查询用户
-//    url: `${api_name}/get/${id}`,
-//    method: 'get'
     @Operation(description="根据id查询")
     @GetMapping("get/{id}")
-    public Result<Object> get(@PathVariable Long id) {
-        Admin admin = adminService.getById(id);
-        return Result.ok(admin);
+    public Mono<Result<Admin>> get(@PathVariable Long id) {
+        return Mono.just(Result.ok(adminService.getById(id)));
     }
 
     //3 添加用户
-//    url: `${api_name}/save`,
-//    method: 'post',
-//    data: user
     @Operation(description="添加用户")
     @PostMapping("save")
-    public Result<Object> save(@RequestBody Admin admin) {
+    public Mono<Result<Object>> save(@RequestBody Admin admin) {
         //获取输入的密码
         String password = admin.getPassword();
-
         //对输入密码进行加密 MD5
         String passwordMD5 = MD5.encrypt(password);
-
         //设置到admin对象里面
         admin.setPassword(passwordMD5);
-
         //调用方法添加
         adminService.save(admin);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //4 修改用户
-//    url: `${api_name}/update`,
-//    method: 'put',
-//    data: user
     @Operation(description="修改用户")
     @PutMapping("update")
-    public Result<Object> update(@RequestBody Admin admin) {
+    public Mono<Result<Object>> update(@RequestBody Admin admin) {
         adminService.updateById(admin);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //5 id删除
-//    url: `${api_name}/remove/${id}`,
-//    method: 'delete'
     @Operation(description="根据id删除用户")
     @DeleteMapping("remove/{id}")
-    public Result<Object> remove(@PathVariable Long id) {
+    public Mono<Result<Object>> remove(@PathVariable Long id) {
         adminService.removeById(id);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //6 批量删除
-//    url: `${api_name}/batchRemove`,
-//    method: 'delete',
-//    data: ids
-    // [1,2,3]
     @Operation(description="批量删除")
     @DeleteMapping("batchRemove")
-    public Result<Object> batchRemove(@RequestBody List<Long> idList) {
+    public Mono<Result<Object>> batchRemove(@RequestBody List<Long> idList) {
         adminService.removeByIds(idList);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
 }

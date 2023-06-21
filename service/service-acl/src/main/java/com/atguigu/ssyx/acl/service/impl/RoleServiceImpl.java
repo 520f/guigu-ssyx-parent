@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +47,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     //获取所有角色，和根据用户id查询用户分配角色列表
     @Override
-    public Map<String, Object> getRoleByAdminId(Long adminId) {
+    public Mono<Map<String, Object>> getRoleByAdminId(Long adminId) {
         //1 查询所有角色
         List<Role> allRolesList = baseMapper.selectList(null);
 
@@ -81,7 +82,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         result.put("allRolesList",allRolesList);
         //用户分配角色列表
         result.put("assignRoles",assignRoleList);
-        return result;
+        return Mono.just(result);
     }
 
     //为用户进行分配

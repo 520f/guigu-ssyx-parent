@@ -10,17 +10,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements AdminService {
     //1 用户列表
     @Override
-    public IPage<Admin> selectPageUser(Page<Admin> pageParam, AdminQueryVo adminQueryVo) {
+    public Mono<IPage<Admin>> selectPageUser(Page<Admin> pageParam, AdminQueryVo adminQueryVo) {
         String username = adminQueryVo.getUsername();
         String name = adminQueryVo.getName();
         LambdaQueryWrapper<Admin> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(StringUtils.isNotEmpty(username),Admin::getUsername,username);
         wrapper.like(StringUtils.isNotEmpty(name),Admin::getName,name);
-        return baseMapper.selectPage(pageParam, wrapper);
+        return Mono.just(baseMapper.selectPage(pageParam, wrapper));
     }
 }

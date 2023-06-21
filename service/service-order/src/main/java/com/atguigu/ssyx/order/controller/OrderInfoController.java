@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Date;
 
@@ -34,7 +36,7 @@ public class OrderInfoController {
 
     //订单查询
     @GetMapping("auth/findUserOrderPage/{page}/{limit}")
-    public Result<IPage<OrderInfo>> findUserOrderPage(
+    public Mono<Result<IPage<OrderInfo>>> findUserOrderPage(
             @Parameter(name = "page", description = "当前页码", required = true)
             @PathVariable Long page,
             @Parameter(name = "limit", description = "每页记录数", required = true)
@@ -47,45 +49,48 @@ public class OrderInfoController {
 
         //分页查询条件
         Page<OrderInfo> pageParam = new Page<>(page,limit);
-        return Result.ok(orderInfoService.getOrderInfoByUserIdPage(pageParam,orderUserQueryVo));
+        return orderInfoService.getOrderInfoByUserIdPage(pageParam,orderUserQueryVo)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description = "查询支付状态")
     @GetMapping("/queryPayStatus/{orderNo}")
-    public Result<ResultCodeEnum> queryPayStatus(
+    public Mono<Result<ResultCodeEnum>> queryPayStatus(
             @Parameter(name = "orderNo", description = "订单No", required = true)
             @PathVariable("orderNo") String orderNo) {
         System.out.println(new Date());
         for (int i = 0; i <=3; i++) {
             if(i==3) {
-                return Result.ok(ResultCodeEnum.SUCCESS);
+                return Mono.just(Result.ok(ResultCodeEnum.SUCCESS));
             }
         }
-        return Result.ok(ResultCodeEnum.URL_ENCODE_ERROR);
+        return Mono.just(Result.ok(ResultCodeEnum.URL_ENCODE_ERROR));
     }
 
     @Operation(description = "确认订单")
     @GetMapping("auth/confirmOrder")
-    public Result<OrderConfirmVo> confirm() {
-        return Result.ok(orderInfoService.confirmOrder());
+    public Mono<Result<OrderConfirmVo>> confirm() {
+        return orderInfoService.confirmOrder().mapNotNull(Result::ok).switchIfEmpty(Mono.just(Result.fail(null))).subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description = "生成订单")
     @PostMapping("auth/submitOrder")
-    public Result<Long> submitOrder(@RequestBody OrderSubmitVo orderParamVo) {
-        return Result.ok(orderInfoService.submitOrder(orderParamVo));
+    public Mono<Result<Long>> submitOrder(@RequestBody OrderSubmitVo orderParamVo) {
+        return orderInfoService.submitOrder(orderParamVo).mapNotNull(Result::ok).switchIfEmpty(Mono.just(Result.fail(null))).subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description = "获取订单详情")
     @GetMapping("auth/getOrderInfoById/{orderId}")
-    public Result<OrderInfo> getOrderInfoById(@PathVariable("orderId") Long orderId){
-        return Result.ok(orderInfoService.getOrderInfoById(orderId));
+    public Mono<Result<OrderInfo>> getOrderInfoById(@PathVariable("orderId") Long orderId){
+        return orderInfoService.getOrderInfoById(orderId).mapNotNull(Result::ok).switchIfEmpty(Mono.just(Result.fail(null))).subscribeOn(Schedulers.parallel());
     }
 
     //根据orderNo查询订单信息
     @GetMapping("inner/getOrderInfo/{orderNo}")
-    public Result<OrderInfo> getOrderInfo(@PathVariable("orderNo") String orderNo) {
-        return Result.ok(orderInfoService.getOrderInfoByOrderNo(orderNo));
+    public Mono<Result<OrderInfo>> getOrderInfo(@PathVariable("orderNo") String orderNo) {
+        return orderInfoService.getOrderInfoByOrderNo(orderNo).mapNotNull(Result::ok).switchIfEmpty(Mono.just(Result.fail(null))).subscribeOn(Schedulers.parallel());
     }
 }
 

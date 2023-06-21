@@ -1,6 +1,6 @@
 package com.atguigu.ssyx.home.controller;
 
-import com.atguigu.ssyx.client.product.ProductFeignClient;
+import com.atguigu.ssyx.client.product.ProductReactorClient;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.model.product.Category;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -17,11 +19,14 @@ import java.util.List;
 public class CategoryApiController {
 
     @Autowired
-    private ProductFeignClient productFeignClient;
+    private ProductReactorClient productReactorClient;
 
     //查询所有分类
     @GetMapping("category")
-    public Result<List<Category>> categoryList() {
-        return Result.ok(productFeignClient.findAllCategoryList());
+    public Mono<Result<List<Category>>> categoryList() {
+        return productReactorClient.findAllCategoryList()
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 }

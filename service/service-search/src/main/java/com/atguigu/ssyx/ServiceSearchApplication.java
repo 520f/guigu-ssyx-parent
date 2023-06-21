@@ -6,12 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)//取消数据源自动配置
 @EnableDiscoveryClient
-@EnableFeignClients
 @EnableElasticsearchRepositories(basePackages = "com")
 public class ServiceSearchApplication {
 

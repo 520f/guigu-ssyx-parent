@@ -1,6 +1,7 @@
 package com.atguigu.ssyx.cart.service;
 
 import com.atguigu.ssyx.model.order.CartInfo;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public interface CartInfoService {
     void batchDeleteCart(List<Long> skuIdList,Long userId);
 
     //购物车列表
-    List<CartInfo> getCartList(Long userId);
+    Mono<List<CartInfo>> getCartList(Long userId);
 
     //1 根据skuId选中
     void checkCart(Long userId, Long skuId, Integer isChecked);
@@ -31,7 +32,7 @@ public interface CartInfoService {
     void batchCheckCart(List<Long> skuIdList, Long userId, Integer isChecked);
 
     //获取当前用户购物车选中购物项
-    List<CartInfo> getCartCheckedList(Long userId);
+    Mono<List<CartInfo>> getCartCheckedList(Long userId);
 
     //根据userId删除选中购物车记录
     void deleteCartChecked(Long userId);

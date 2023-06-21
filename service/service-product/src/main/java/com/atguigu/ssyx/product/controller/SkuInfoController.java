@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -35,11 +37,14 @@ public class SkuInfoController {
 //    params: searchObj
     @Operation(description = "sku列表")
     @GetMapping("{page}/{limit}")
-    public Result<IPage<SkuInfo>> list(@PathVariable Long page,
-                       @PathVariable Long limit,
-                       SkuInfoQueryVo skuInfoQueryVo) {
+    public Mono<Result<IPage<SkuInfo>>> list(@PathVariable Long page,
+                     @PathVariable Long limit,
+                     SkuInfoQueryVo skuInfoQueryVo) {
         Page<SkuInfo> pageParam = new Page<>(page,limit);
-        return Result.ok(skuInfoService.selectPageSkuInfo(pageParam,skuInfoQueryVo));
+        return skuInfoService.selectPageSkuInfo(pageParam,skuInfoQueryVo)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     //添加商品sku信息

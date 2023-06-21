@@ -5,7 +5,7 @@ import com.atguigu.ssyx.activity.mapper.ActivityRuleMapper;
 import com.atguigu.ssyx.activity.mapper.ActivitySkuMapper;
 import com.atguigu.ssyx.activity.service.ActivityInfoService;
 import com.atguigu.ssyx.activity.service.CouponInfoService;
-import com.atguigu.ssyx.client.product.ProductFeignClient;
+import com.atguigu.ssyx.client.product.ProductReactorClient;
 import com.atguigu.ssyx.enums.ActivityType;
 import com.atguigu.ssyx.model.activity.ActivityInfo;
 import com.atguigu.ssyx.model.activity.ActivityRule;
@@ -23,6 +23,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -46,32 +47,32 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
     private ActivitySkuMapper activitySkuMapper;
 
     @Autowired
-    private ProductFeignClient productFeignClient;
+    private ProductReactorClient productReactorClient;
 
     @Autowired
     private CouponInfoService couponInfoService;
 
     //根据skuID获取营销数据和优惠卷
     @Override
-    public Map<String, Object> findActivityAndCoupon(Long skuId, Long userId) {
+    public Mono<Map<String, Object>> findActivityAndCoupon(Long skuId, Long userId) {
         //1 根据skuId获取sku营销活动，一个活动有多个规则
         List<ActivityRule> activityRuleList = this.findActivityRuleBySkuId(skuId);
 
         //2 根据skuId+userId查询优惠卷信息
-        List<CouponInfo> couponInfoList =  couponInfoService.findCouponInfoList(skuId,userId);
-
-        //3 封装到map集合，返回
-        Map<String, Object> map = new HashMap<>();
-        map.put("couponInfoList",couponInfoList);
-        map.put("activityRuleList", activityRuleList);
-        return map;
+        return couponInfoService.findCouponInfoList(skuId, userId).map(couponInfoList -> {
+            //3 封装到map集合，返回
+            Map<String, Object> map = new HashMap<>();
+            map.put("couponInfoList", couponInfoList);
+            map.put("activityRuleList", activityRuleList);
+            return map;
+        });
     }
 
     //根据skuId获取活动规则数据
     @Override
     public List<ActivityRule> findActivityRuleBySkuId(Long skuId) {
         List<ActivityRule> activityRuleList = baseMapper.findActivityRule(skuId);
-        for (ActivityRule activityRule:activityRuleList) {
+        for (ActivityRule activityRule : activityRuleList) {
             String ruleDesc = this.getRuleDesc(activityRule);
             activityRule.setRuleDesc(ruleDesc);
         }
@@ -80,55 +81,54 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
     //获取购物车里面满足条件优惠卷和活动的信息
     @Override
-    public OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList,
-                                                    Long userId) {
+    public Mono<OrderConfirmVo> findCartActivityAndCoupon(List<CartInfo> cartInfoList,Long userId) {
         //1 获取购物车，每个购物项参与活动，根据活动规则分组，
         //一个规则对应多个商品
-        List<CartInfoVo> cartInfoVoList = this.findCartActivityList(cartInfoList);
-
-        //2 计算参与活动之后金额
-        BigDecimal activityReduceAmount = cartInfoVoList.stream()
-                .filter(cartInfoVo -> cartInfoVo.getActivityRule() != null)
-                .map(cartInfoVo -> cartInfoVo.getActivityRule().getReduceAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        //3 获取购物车可以使用优惠卷列表
-        List<CouponInfo> couponInfoList =
-                couponInfoService.findCartCouponInfo(cartInfoList,userId);
-        
-        //4 计算商品使用优惠卷之后金额，一次只能使用一张优惠卷
-        BigDecimal couponReduceAmount = new BigDecimal(0);
-        if(!CollectionUtils.isEmpty(couponInfoList)) {
-            couponReduceAmount = couponInfoList.stream()
-                    .filter(couponInfo -> couponInfo.getIsOptimal() == 1)
-                    .map(CouponInfo::getAmount)
+        return findCartActivityList(cartInfoList).map(cartInfoVoList -> {
+            //2 计算参与活动之后金额
+            BigDecimal activityReduceAmount = cartInfoVoList.stream()
+                    .filter(cartInfoVo -> cartInfoVo.getActivityRule() != null)
+                    .map(cartInfoVo -> cartInfoVo.getActivityRule().getReduceAmount())
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-        }
 
-        //5 计算没有参与活动，没有使用优惠卷原始金额
-        BigDecimal originalTotalAmount = cartInfoList.stream()
-                .filter(cartInfo -> cartInfo.getIsChecked() == 1)
-                .map(cartInfo -> cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            //3 获取购物车可以使用优惠卷列表
+            List<CouponInfo> couponInfoList =
+                    couponInfoService.findCartCouponInfo(cartInfoList, userId);
 
-        //6 最终金额
-        BigDecimal totalAmount =
-                originalTotalAmount.subtract(activityReduceAmount).subtract(couponReduceAmount);
+            //4 计算商品使用优惠卷之后金额，一次只能使用一张优惠卷
+            BigDecimal couponReduceAmount = new BigDecimal(0);
+            if (!CollectionUtils.isEmpty(couponInfoList)) {
+                couponReduceAmount = couponInfoList.stream()
+                        .filter(couponInfo -> couponInfo.getIsOptimal() == 1)
+                        .map(CouponInfo::getAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
 
-        //7 封装需要数据到OrderConfirmVo,返回
-        OrderConfirmVo orderTradeVo = new OrderConfirmVo();
-        orderTradeVo.setCarInfoVoList(cartInfoVoList);
-        orderTradeVo.setActivityReduceAmount(activityReduceAmount);
-        orderTradeVo.setCouponInfoList(couponInfoList);
-        orderTradeVo.setCouponReduceAmount(couponReduceAmount);
-        orderTradeVo.setOriginalTotalAmount(originalTotalAmount);
-        orderTradeVo.setTotalAmount(totalAmount);
-        return orderTradeVo;
+            //5 计算没有参与活动，没有使用优惠卷原始金额
+            BigDecimal originalTotalAmount = cartInfoList.stream()
+                    .filter(cartInfo -> cartInfo.getIsChecked() == 1)
+                    .map(cartInfo -> cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            //6 最终金额
+            BigDecimal totalAmount =
+                    originalTotalAmount.subtract(activityReduceAmount).subtract(couponReduceAmount);
+
+            //7 封装需要数据到OrderConfirmVo,返回
+            OrderConfirmVo orderTradeVo = new OrderConfirmVo();
+            orderTradeVo.setCarInfoVoList(cartInfoVoList);
+            orderTradeVo.setActivityReduceAmount(activityReduceAmount);
+            orderTradeVo.setCouponInfoList(couponInfoList);
+            orderTradeVo.setCouponReduceAmount(couponReduceAmount);
+            orderTradeVo.setOriginalTotalAmount(originalTotalAmount);
+            orderTradeVo.setTotalAmount(totalAmount);
+            return orderTradeVo;
+        });
     }
 
     //获取购物车对应规则数据
     @Override
-    public List<CartInfoVo> findCartActivityList(List<CartInfo> cartInfoList) {
+    public Mono<List<CartInfoVo>> findCartActivityList(List<CartInfo> cartInfoList) {
         //创建最终返回集合
         List<CartInfoVo> cartInfoVoList = new ArrayList<>();
         //获取所有skuId
@@ -148,16 +148,16 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
         //获取活动里面规则数据
         //key是活动id  value是活动里面规则列表数据
-        Map<Long,List<ActivityRule>> activityIdToActivityRuleListMap
+        Map<Long, List<ActivityRule>> activityIdToActivityRuleListMap
                 = new HashMap<>();
         //所有活动id
         Set<Long> activityIdSet = activitySkuList.stream().map(ActivitySku::getActivityId)
                 .collect(Collectors.toSet());
-        if(!CollectionUtils.isEmpty(activityIdSet)) {
+        if (!CollectionUtils.isEmpty(activityIdSet)) {
             //activity_rule表
             LambdaQueryWrapper<ActivityRule> wrapper = new LambdaQueryWrapper<>();
-            wrapper.orderByDesc(ActivityRule::getConditionAmount,ActivityRule::getConditionNum);
-            wrapper.in(ActivityRule::getActivityId,activityIdSet);
+            wrapper.orderByDesc(ActivityRule::getConditionAmount, ActivityRule::getConditionNum);
+            wrapper.in(ActivityRule::getActivityId, activityIdSet);
             List<ActivityRule> activityRuleList = activityRuleMapper.selectList(wrapper);
 
             //封装到activityIdToActivityRuleListMap里面
@@ -169,7 +169,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
         //有活动的购物项skuId
         Set<Long> activitySkuIdSet = new HashSet<>();
-        if(!CollectionUtils.isEmpty(activityIdToSkuIdListMap)) {
+        if (!CollectionUtils.isEmpty(activityIdToSkuIdListMap)) {
             //遍历activityIdToSkuIdListMap集合
             for (Map.Entry<Long, Set<Long>> entry : activityIdToSkuIdListMap.entrySet()) {
                 //活动id
@@ -195,7 +195,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 //满减"
                 if (activityType == ActivityType.FULL_REDUCTION) {
                     activityRule = this.computeFullReduction(activityTotalAmount, currentActivityRuleList);
-                //满量
+                    //满量
                 } else {
                     activityRule = this.computeFullDiscount(activityTotalNum, activityTotalAmount, currentActivityRuleList);
                 }
@@ -210,16 +210,16 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 activitySkuIdSet.addAll(currentActivitySkuIdSet);
             }
         }
-        
+
         //没有活动购物项skuId
         //获取哪些skuId没有参加活动
         skuIdList.removeAll(activitySkuIdSet);
-        if(!CollectionUtils.isEmpty(skuIdList)) {
+        if (!CollectionUtils.isEmpty(skuIdList)) {
             //skuId对应购物项
             Map<Long, CartInfo> skuIdCartInfoMap = cartInfoList.stream().collect(
                     Collectors.toMap(CartInfo::getSkuId, CartInfo -> CartInfo)
             );
-            for(Long skuId  : skuIdList) {
+            for (Long skuId : skuIdList) {
                 CartInfoVo cartInfoVo = new CartInfoVo();
                 //没有活动
                 cartInfoVo.setActivityRule(null);
@@ -231,12 +231,13 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 cartInfoVoList.add(cartInfoVo);
             }
         }
-        
-        return cartInfoVoList;
+
+        return Mono.just(cartInfoVoList);
     }
 
     /**
      * 计算满量打折最优规则
+     *
      * @param activityRuleList //该活动规则skuActivityRuleList数据，已经按照优惠折扣从大到小排序了
      */
     private ActivityRule computeFullDiscount(Integer totalNum, BigDecimal totalAmount, List<ActivityRule> activityRuleList) {
@@ -252,9 +253,9 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 break;
             }
         }
-        if(null == optimalActivityRule) {
+        if (null == optimalActivityRule) {
             //如果没有满足条件的取最小满足条件的一项
-            optimalActivityRule = activityRuleList.get(activityRuleList.size()-1);
+            optimalActivityRule = activityRuleList.get(activityRuleList.size() - 1);
             optimalActivityRule.setReduceAmount(new BigDecimal("0"));
             optimalActivityRule.setSelectType(1);
 
@@ -282,6 +283,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
     /**
      * 计算满减最优规则
+     *
      * @param activityRuleList //该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
      */
     private ActivityRule computeFullReduction(BigDecimal totalAmount, List<ActivityRule> activityRuleList) {
@@ -296,9 +298,9 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 break;
             }
         }
-        if(null == optimalActivityRule) {
+        if (null == optimalActivityRule) {
             //如果没有满足条件的取最小满足条件的一项
-            optimalActivityRule = activityRuleList.get(activityRuleList.size()-1);
+            optimalActivityRule = activityRuleList.get(activityRuleList.size() - 1);
             optimalActivityRule.setReduceAmount(new BigDecimal("0"));
             optimalActivityRule.setSelectType(1);
 
@@ -328,7 +330,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         BigDecimal total = new BigDecimal("0");
         for (CartInfo cartInfo : cartInfoList) {
             //是否选中
-            if(cartInfo.getIsChecked() == 1) {
+            if (cartInfo.getIsChecked() == 1) {
                 BigDecimal itemTotal = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
                 total = total.add(itemTotal);
             }
@@ -340,7 +342,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         int total = 0;
         for (CartInfo cartInfo : cartInfoList) {
             //是否选中
-            if(cartInfo.getIsChecked() == 1) {
+            if (cartInfo.getIsChecked() == 1) {
                 total += cartInfo.getSkuNum();
             }
         }
@@ -349,7 +351,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
     //列表
     @Override
-    public IPage<ActivityInfo> selectPage(Page<ActivityInfo> pageParam) {
+    public Mono<IPage<ActivityInfo>> selectPage(Page<ActivityInfo> pageParam) {
         IPage<ActivityInfo> activityInfoPage =
                 baseMapper.selectPage(pageParam, null);
         //分页查询对象里面获取列表数据
@@ -359,34 +361,34 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         activityInfoList.forEach(item -> {
             item.setActivityTypeString(item.getActivityType().getComment());
         });
-        return activityInfoPage;
+        return Mono.just(activityInfoPage);
     }
 
     //1 根据活动id获取活动规则数据
     @Override
-    public Map<String, Object> findActivityRuleList(Long id) {
+    public Mono<Map<String, Object>> findActivityRuleList(Long id) {
         Map<String, Object> result = new HashMap<>();
         //1 根据活动id查询，查询规则列表 activity_rule表
         LambdaQueryWrapper<ActivityRule> wrapperActivityRule = new LambdaQueryWrapper<>();
-        wrapperActivityRule.eq(ActivityRule::getActivityId,id);
+        wrapperActivityRule.eq(ActivityRule::getActivityId, id);
         List<ActivityRule> activityRuleList = activityRuleMapper.selectList(wrapperActivityRule);
-        result.put("activityRuleList",activityRuleList);
+        result.put("activityRuleList", activityRuleList);
 
         //2 根据活动id查询，查询使用规则商品skuid列表 activity_sku表
         List<ActivitySku> activitySkuList = activitySkuMapper.selectList(
                 new LambdaQueryWrapper<ActivitySku>().eq(ActivitySku::getActivityId, id)
         );
         //获取所有skuId
-        List<Long> skuIdList =
-                activitySkuList.stream().map(ActivitySku::getSkuId).collect(Collectors.toList());
+        List<Long> skuIdList = activitySkuList.stream().map(ActivitySku::getSkuId).collect(Collectors.toList());
         //2.1 通过远程调用 service-product模块接口，根据 skuid列表 得到商品信息
-        List<SkuInfo> skuInfoList = new ArrayList<>();
-        if(!CollectionUtils.isEmpty(skuIdList)) {
-            skuInfoList = productFeignClient.findSkuInfoList(skuIdList);
+        if (!CollectionUtils.isEmpty(skuIdList)) {
+            return productReactorClient.findSkuInfoList(skuIdList).mapNotNull(skuInfoList -> {
+                result.put("skuInfoList", skuInfoList);
+                return result;
+            }).switchIfEmpty(Mono.just(result));
+        } else {
+            return Mono.just(result);
         }
-        result.put("skuInfoList",skuInfoList);
-
-        return result;
     }
 
     //2 在活动里面添加规则数据
@@ -396,17 +398,17 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         //ActivityRule数据删除
         Long activityId = activityRuleVo.getActivityId();
         activityRuleMapper.delete(
-                new LambdaQueryWrapper<ActivityRule>().eq(ActivityRule::getActivityId,activityId)
+                new LambdaQueryWrapper<ActivityRule>().eq(ActivityRule::getActivityId, activityId)
         );
         //ActivitySku数据删除
         activitySkuMapper.delete(
-                new LambdaQueryWrapper<ActivitySku>().eq(ActivitySku::getActivityId,activityId)
+                new LambdaQueryWrapper<ActivitySku>().eq(ActivitySku::getActivityId, activityId)
         );
 
         //第二步 获取规则列表数据
         List<ActivityRule> activityRuleList = activityRuleVo.getActivityRuleList();
         ActivityInfo activityInfo = baseMapper.selectById(activityId);
-        for (ActivityRule activityRule:activityRuleList) {
+        for (ActivityRule activityRule : activityRuleList) {
             activityRule.setActivityId(activityId);//活动id
             activityRule.setActivityType(activityInfo.getActivityType());//类型
             activityRuleMapper.insert(activityRule);
@@ -414,7 +416,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
         //第三步 获取规则范围数据
         List<ActivitySku> activitySkuList = activityRuleVo.getActivitySkuList();
-        for (ActivitySku activitySku:activitySkuList) {
+        for (ActivitySku activitySku : activitySkuList) {
             activitySku.setActivityId(activityId);
             activitySkuMapper.insert(activitySku);
         }
@@ -422,57 +424,58 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
     //3 根据关键字查询匹配sku信息
     @Override
-    public List<SkuInfo> findSkuInfoByKeyword(String keyword) {
+    public Mono<List<SkuInfo>> findSkuInfoByKeyword(String keyword) {
         //第一步 根据关键字查询sku匹配内容列表
         //// (1) service-product模块创建接口 据关键字查询sku匹配内容列表
         //// (2) service-activity远程调用得到sku内容列表
-        List<SkuInfo> skuInfoList =
-                productFeignClient.findSkuInfoByKeyword(keyword);
-        //判断：如果根据关键字查询不到匹配内容，直接返回空集合
-        if(skuInfoList.size()==0) {
-            return skuInfoList;
-        }
 
-        //从skuInfoList集合获取所有skuId
-        List<Long> skuIdList =
-                skuInfoList.stream().map(SkuInfo::getId).collect(Collectors.toList());
-
-        //第二步 判断添加商品之前是否参加过活动，
-        // 如果之前参加过，活动正在进行中，排除商品
-        //// (1) 查询两张表判断 activity_info 和 activity_sku，编写SQL语句实现
-        List<Long> existSkuIdList = baseMapper.selectSkuIdListExist(skuIdList);
-
-        //// (2) 判断逻辑处理:排除已经参加活动商品
-        List<SkuInfo> findSkuList = new ArrayList<>();
-        //遍历全部sku列表
-        for (SkuInfo skuInfo:skuInfoList) {
-            if(!existSkuIdList.contains(skuInfo.getId())) {
-                findSkuList.add(skuInfo);
+        return productReactorClient.findSkuInfoByKeyword(keyword).map(skuInfoList -> {
+            //判断：如果根据关键字查询不到匹配内容，直接返回空集合
+            if (skuInfoList.size() == 0) {
+                return skuInfoList;
             }
-        }
-        return findSkuList;
+
+            //从skuInfoList集合获取所有skuId
+            List<Long> skuIdList =
+                    skuInfoList.stream().map(SkuInfo::getId).collect(Collectors.toList());
+
+            //第二步 判断添加商品之前是否参加过活动，
+            // 如果之前参加过，活动正在进行中，排除商品
+            //// (1) 查询两张表判断 activity_info 和 activity_sku，编写SQL语句实现
+            List<Long> existSkuIdList = baseMapper.selectSkuIdListExist(skuIdList);
+
+            //// (2) 判断逻辑处理:排除已经参加活动商品
+            List<SkuInfo> findSkuList = new ArrayList<>();
+            //遍历全部sku列表
+            for (SkuInfo skuInfo : skuInfoList) {
+                if (!existSkuIdList.contains(skuInfo.getId())) {
+                    findSkuList.add(skuInfo);
+                }
+            }
+            return findSkuList;
+        });
     }
 
     //根据skuId列表获取促销信息
     @Override
-    public Map<Long, List<String>> findActivity(List<Long> skuIdList) {
+    public Mono<Map<Long, List<String>>> findActivity(List<Long> skuIdList) {
         Map<Long, List<String>> result = new HashMap<>();
         //skuIdList遍历，得到每个skuId
         skuIdList.forEach(skuId -> {
             //根据skuId进行查询，查询sku对应活动里面规则列表
             List<ActivityRule> activityRuleList =
-                                  baseMapper.findActivityRule(skuId);
+                    baseMapper.findActivityRule(skuId);
             //数据封装，规则名称
-            if(!CollectionUtils.isEmpty(activityRuleList)) {
+            if (!CollectionUtils.isEmpty(activityRuleList)) {
                 List<String> ruleList = new ArrayList<>();
                 //把规则名称处理
-                for (ActivityRule activityRule:activityRuleList) {
+                for (ActivityRule activityRule : activityRuleList) {
                     ruleList.add(this.getRuleDesc(activityRule));
                 }
-                result.put(skuId,ruleList);
+                result.put(skuId, ruleList);
             }
         });
-        return result;
+        return Mono.just(result);
     }
 
     //构造规则名称的方法

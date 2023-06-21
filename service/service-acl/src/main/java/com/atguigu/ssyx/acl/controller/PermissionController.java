@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -20,43 +22,33 @@ public class PermissionController {
     private PermissionService permissionService;
 
     //查询所有菜单
-//    url: `${api_name}`,
-//    method: 'get'
     @Operation(description="查询所有菜单")
     @GetMapping
-    public Result<List<Permission>> list() {
-        return Result.ok(permissionService.queryAllPermission());
+    public Mono<Result<List<Permission>>> list() {
+        return permissionService.queryAllPermission().map(Result::ok).subscribeOn(Schedulers.boundedElastic());
     }
 
     //添加菜单
-//    url: `${api_name}/save`,
-//    method: "post",
-//    data: permission
     @Operation(description="添加菜单")
     @PostMapping("save")
-    public Result<Boolean> save(@RequestBody Permission permission) {
+    public Mono<Result<Boolean>> save(@RequestBody Permission permission) {
         permissionService.save(permission);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //修改菜单
-//    url: `${api_name}/update`,
-//    method: "put",
-//    data: permission
     @Operation(description="修改菜单")
     @PutMapping("update")
-    public Result<Boolean> update(@RequestBody Permission permission) {
+    public Mono<Result<Boolean>> update(@RequestBody Permission permission) {
         permissionService.updateById(permission);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //递归删除菜单
-//    url: `${api_name}/remove/${id}`,
-//    method: "delete"
     @Operation(description="递归删除菜单")
     @DeleteMapping("remove/{id}")
-    public Result<Boolean> remove(@PathVariable Long id) {
+    public Mono<Result<Boolean>> remove(@PathVariable Long id) {
         permissionService.removeChildById(id);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 }

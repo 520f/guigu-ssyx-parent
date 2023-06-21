@@ -8,6 +8,7 @@ import com.atguigu.ssyx.vo.activity.CouponRuleVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -28,48 +29,39 @@ public class CouponInfoController {
     private CouponInfoService couponInfoService;
 
     //1 优惠卷分页查询
-//    url: `${api_name}/${page}/${limit}`,
-//    method: 'get'
     @GetMapping("{page}/{limit}")
-    public Result<IPage<CouponInfo>> list(@PathVariable Long page,
-                       @PathVariable Long limit) {
-        return Result.ok(couponInfoService.selectPageCouponInfo(page,limit));
+    public Mono<Result<IPage<CouponInfo>>> list(@PathVariable Long page,@PathVariable Long limit) {
+        return couponInfoService.selectPageCouponInfo(page, limit)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)));
     }
 
     //2 添加优惠卷
-//    url: `${api_name}/save`,
-//    method: 'post',
-//    data: role
     @PostMapping("save")
-    public Result<Boolean> save(@RequestBody CouponInfo couponInfo) {
+    public Mono<Result<Boolean>> save(@RequestBody CouponInfo couponInfo) {
         couponInfoService.save(couponInfo);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //3 根据id查询优惠卷
-//    url: `${api_name}/get/${id}`,
-//    method: 'get'
     @GetMapping("get/{id}")
-    public Result<CouponInfo> get(@PathVariable Long id) {
-        return Result.ok(couponInfoService.getCouponInfo(id));
+    public Mono<Result<CouponInfo>> get(@PathVariable Long id) {
+        return Mono.just(Result.ok(couponInfoService.getCouponInfo(id)));
     }
 
     //4 根据优惠卷id查询规则数据
-//    url: `${api_name}/findCouponRuleList/${id}`,
-//    method: 'get'
     @GetMapping("findCouponRuleList/{id}")
-    public Result<Map<String,Object>> findCouponRuleList(@PathVariable Long id) {
-        return Result.ok(couponInfoService.findCouponRuleList(id));
+    public Mono<Result<Map<String, Object>>> findCouponRuleList(@PathVariable Long id) {
+        return couponInfoService.findCouponRuleList(id)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)));
     }
 
     //5 添加优惠卷规则数据
-//    url: `${api_name}/saveCouponRule`,
-//    method: 'post',
-//    data: rule
     @PostMapping("saveCouponRule")
-    public Result<Boolean> saveCouponRule(@RequestBody CouponRuleVo couponRuleVo) {
+    public Mono<Result<Boolean>> saveCouponRule(@RequestBody CouponRuleVo couponRuleVo) {
         couponInfoService.saveCouponRule(couponRuleVo);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 }
 

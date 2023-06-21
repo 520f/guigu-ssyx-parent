@@ -4,6 +4,7 @@ import com.atguigu.ssyx.model.search.SkuEs;
 import com.atguigu.ssyx.vo.search.SkuEsQueryVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -16,10 +17,10 @@ public interface SkuService {
     void lowerSku(Long skuId);
 
     //获取爆款商品
-    List<SkuEs> findHotSkuList();
+    Mono<List<SkuEs>> findHotSkuList();
 
     //查询分类商品
-    Page<SkuEs> search(Pageable pageable, SkuEsQueryVo skuEsQueryVo);
+    Mono<Page<SkuEs>> search(Pageable pageable, SkuEsQueryVo skuEsQueryVo);
 
     //更新商品热度
     void incrHotScore(Long skuId);

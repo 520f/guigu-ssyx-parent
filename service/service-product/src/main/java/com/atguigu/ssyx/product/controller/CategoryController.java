@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -29,59 +31,57 @@ public class CategoryController {
     private CategoryService categoryService;
 
     //商品分类列表
-//    url: `${api_name}/${page}/${limit}`,
-//    method: 'get',
-//    params: searchObj
     @Operation(description = "商品分类列表")
     @GetMapping("{page}/{limit}")
-    public Result<IPage<Category>> list(@PathVariable Long page,
-                       @PathVariable Long limit,
-                       CategoryQueryVo categoryQueryVo) {
+    public Mono<Result<IPage<Category>>> list(@PathVariable Long page,
+                     @PathVariable Long limit,
+                     CategoryQueryVo categoryQueryVo) {
         Page<Category> pageParam = new Page<>(page,limit);
-        return Result.ok(categoryService.selectPageCategory(pageParam,categoryQueryVo));
+        return categoryService.selectPageCategory(pageParam,categoryQueryVo)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description =  "获取商品分类信息")
     @GetMapping("get/{id}")
-    public Result<Category> get(@PathVariable Long id) {
-        return Result.ok(categoryService.getById(id));
+    public Mono<Result<Category>> get(@PathVariable Long id) {
+        return Mono.just(Result.ok(categoryService.getById(id)));
     }
 
     @Operation(description =  "新增商品分类")
     @PostMapping("save")
-    public Result<Boolean> save(@RequestBody Category category) {
+    public Mono<Result<Boolean>> save(@RequestBody Category category) {
         categoryService.save(category);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     @Operation(description =  "修改商品分类")
     @PutMapping("update")
-    public Result<Boolean> updateById(@RequestBody Category category) {
+    public Mono<Result<Boolean>> updateById(@RequestBody Category category) {
         categoryService.updateById(category);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     @Operation(description =  "删除商品分类")
     @DeleteMapping("remove/{id}")
-    public Result<Boolean> remove(@PathVariable Long id) {
+    public Mono<Result<Boolean>> remove(@PathVariable Long id) {
         categoryService.removeById(id);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     @Operation(description =  "根据id列表删除商品分类")
     @DeleteMapping("batchRemove")
-    public Result<Boolean> batchRemove(@RequestBody List<Long> idList) {
+    public Mono<Result<Boolean>> batchRemove(@RequestBody List<Long> idList) {
         categoryService.removeByIds(idList);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
-    //      url: `${api_name}/findAllList`,
-    //      method: 'get'
     //查询所有商品分类
     @Operation(description = "查询所有商品分类")
     @GetMapping("findAllList")
-    public Result<List<Category>> findAllList() {
-        return Result.ok(categoryService.list());
+    public Mono<Result<List<Category>>> findAllList() {
+        return  Mono.just(Result.ok(categoryService.list()));
     }
 }
 

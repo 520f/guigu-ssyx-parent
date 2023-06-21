@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Map;
 
@@ -21,8 +23,8 @@ public class ItemApiController {
     private ItemService itemService;
 
     @GetMapping("item/{id}")
-    public Result<Map<String,Object>> index(@PathVariable Long id) {
+    public Mono<Result<Map<String,Object>>> index(@PathVariable Long id) {
         Long userId = StpUtil.getLoginId(-1L);
-        return Result.ok(itemService.item(id,userId));
+        return itemService.item(id, userId).map(Result::ok).subscribeOn(Schedulers.parallel());
     }
 }

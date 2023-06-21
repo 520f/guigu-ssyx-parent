@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -217,21 +218,21 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
 
     //根据skuId列表得到sku信息列表
     @Override
-    public List<SkuInfo> findSkuInfoList(List<Long> skuIdList) {
-        return baseMapper.selectBatchIds(skuIdList);
+    public Mono<List<SkuInfo>> findSkuInfoList(List<Long> skuIdList) {
+        return Mono.just(baseMapper.selectBatchIds(skuIdList));
     }
 
     //根据关键字匹配sku列表
     @Override
-    public List<SkuInfo> findSkuInfoByKeyword(String keyword) {
-        return baseMapper.selectList(
+    public Mono<List<SkuInfo>> findSkuInfoByKeyword(String keyword) {
+        return Mono.justOrEmpty(baseMapper.selectList(
                 new LambdaQueryWrapper<SkuInfo>().like(SkuInfo::getSkuName, keyword)
-        );
+        ));
     }
 
     //获取新人专享商品
     @Override
-    public List<SkuInfo> findNewPersonSkuInfoList() {
+    public Mono<List<SkuInfo>> findNewPersonSkuInfoList() {
         //条件1 ： is_new_person=1
         //条件2 ： publish_status=1
         //条件3 ：显示其中三个
@@ -244,12 +245,12 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         wrapper.orderByDesc(SkuInfo::getStock);//库存排序
         //调用方法查询
         IPage<SkuInfo> skuInfoPage = baseMapper.selectPage(pageParam, wrapper);
-        return skuInfoPage.getRecords();
+        return Mono.just(skuInfoPage.getRecords());
     }
 
     //根据skuId获取sku信息
     @Override
-    public SkuInfoVo getSkuInfoVo(Long skuId) {
+    public Mono<SkuInfoVo> getSkuInfoVo(Long skuId) {
 
         SkuInfoVo skuInfoVo = new SkuInfoVo();
 
@@ -270,12 +271,12 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         skuInfoVo.setSkuImagesList(imageList);
         skuInfoVo.setSkuPosterList(posterList);
         skuInfoVo.setSkuAttrValueList(attrValueList);
-        return skuInfoVo;
+        return Mono.just(skuInfoVo);
     }
 
     //验证和锁定库存
     @Override
-    public Boolean checkAndLock(List<SkuStockLockVo> skuStockLockVoList,
+    public Mono<Boolean> checkAndLock(List<SkuStockLockVo> skuStockLockVoList,
                                 String orderNo) {
         //1 判断skuStockLockVoList集合是否为空
         if(CollectionUtils.isEmpty(skuStockLockVoList)) {
@@ -296,13 +297,13 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
                                 skuStockLockVo.getSkuNum());
                     });
             //返回失败的状态
-            return false;
+            return Mono.just(false);
         }
 
         //4 如果所有商品都锁定成功了，redis缓存相关数据，为了方便后面解锁和减库存
         redisTemplate.opsForValue()
                 .set(RedisConst.SROCK_INFO+orderNo,skuStockLockVoList);
-        return true;
+        return Mono.just(true);
     }
 
     //扣减库存成功，更新订单状态
@@ -356,7 +357,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
 
     //sku列表
     @Override
-    public IPage<SkuInfo> selectPageSkuInfo(Page<SkuInfo> pageParam,
+    public Mono<IPage<SkuInfo>> selectPageSkuInfo(Page<SkuInfo> pageParam,
                                             SkuInfoQueryVo skuInfoQueryVo) {
         String keyword = skuInfoQueryVo.getKeyword();
         Long categoryId = skuInfoQueryVo.getCategoryId();
@@ -366,7 +367,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         wrapper.like(StringUtils.isNotEmpty(keyword),SkuInfo::getSkuName,keyword);
         wrapper.eq(null!=categoryId,SkuInfo::getCategoryId,categoryId);
         wrapper.like(StringUtils.isNotEmpty(skuType),SkuInfo::getSkuType,skuType);
-        return baseMapper.selectPage(pageParam,wrapper);
+        return Mono.just(baseMapper.selectPage(pageParam,wrapper));
     }
 
 }

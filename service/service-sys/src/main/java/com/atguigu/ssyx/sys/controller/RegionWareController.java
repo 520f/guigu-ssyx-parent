@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
@@ -40,32 +42,30 @@ public class RegionWareController {
 //    params: searchObj
     @Operation(description = "开通区域列表")
     @GetMapping("{page}/{limit}")
-    public Result<IPage<RegionWare>> list(@PathVariable Long page,
-                       @PathVariable Long limit,
-                       RegionWareQueryVo regionWareQueryVo) {
+    public Mono<Result<IPage<RegionWare>>> list(@PathVariable Long page,
+                     @PathVariable Long limit,
+                     RegionWareQueryVo regionWareQueryVo) {
         Page<RegionWare> pageParam = new Page<>(page,limit);
-        return Result.ok(regionWareService.selectPageRegionWare(pageParam,regionWareQueryVo));
+        return regionWareService.selectPageRegionWare(pageParam,regionWareQueryVo)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     //添加开通区域
-//    url: `${api_name}/save`,
-//    method: 'post',
-//    data: role
     @Operation(description = "添加开通区域")
     @PostMapping("save")
-    public Result<Boolean> addRegionWare(@RequestBody RegionWare regionWare) {
+    public Mono<Result<Boolean>> addRegionWare(@RequestBody RegionWare regionWare) {
         regionWareService.saveRegionWare(regionWare);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //删除开通区域
-//    url: `${api_name}/remove/${id}`,
-//    method: 'delete'
     @Operation(description = "删除开通区域")
     @DeleteMapping("remove/{id}")
-    public Result<Boolean> remove(@PathVariable Long id) {
+    public Mono<Result<Boolean>> remove(@PathVariable Long id) {
         regionWareService.removeById(id);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //取消开通区域
@@ -73,10 +73,9 @@ public class RegionWareController {
 //    method: 'post'
     @Operation(description = "取消开通区域")
     @PostMapping("updateStatus/{id}/{status}")
-    public Result<Boolean> updateStatus(@PathVariable Long id,
-                               @PathVariable Integer status) {
+    public Mono<Result<Boolean>> updateStatus(@PathVariable Long id,@PathVariable Integer status) {
         regionWareService.updateStatus(id,status);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 }
 

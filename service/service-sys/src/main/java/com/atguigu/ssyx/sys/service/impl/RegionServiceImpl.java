@@ -6,6 +6,7 @@ import com.atguigu.ssyx.sys.service.RegionService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -22,9 +23,9 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> impleme
 
     //根据区域关键字查询区域列表信息
     @Override
-    public List<Region> getRegionByKeyword(String keyword) {
+    public Mono<List<Region>> getRegionByKeyword(String keyword) {
         LambdaQueryWrapper<Region> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(Region::getName,keyword);
-        return baseMapper.selectList(wrapper);
+        return Mono.just(baseMapper.selectList(wrapper));
     }
 }

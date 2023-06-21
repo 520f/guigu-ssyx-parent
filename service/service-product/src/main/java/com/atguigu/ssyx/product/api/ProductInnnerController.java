@@ -9,6 +9,8 @@ import com.atguigu.ssyx.vo.product.SkuStockLockVo;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -24,57 +26,57 @@ public class ProductInnnerController {
 
     //根据分类id获取分类信息
     @GetMapping("inner/getCategory/{categoryId}")
-    public Category  getCategory(@PathVariable Long categoryId) {
-        return categoryService.getById(categoryId);
+    public Mono<Category> getCategory(@PathVariable Long categoryId) {
+        return Mono.just(categoryService.getById(categoryId));
     }
 
     //根据skuid获取sku信息
     @GetMapping("inner/getSkuInfo/{skuId}")
-    public SkuInfo getSkuInfo(@PathVariable Long skuId) {
-        return skuInfoService.getById(skuId);
+    public Mono<SkuInfo> getSkuInfo(@PathVariable Long skuId) {
+        return Mono.just(skuInfoService.getById(skuId));
     }
 
     //根据skuId列表得到sku信息列表
     @PostMapping("inner/findSkuInfoList")
-    public List<SkuInfo> findSkuInfoList(@RequestBody List<Long> skuIdList) {
-        return skuInfoService.findSkuInfoList(skuIdList);
+    public Mono<List<SkuInfo>> findSkuInfoList(@RequestBody List<Long> skuIdList) {
+        return skuInfoService.findSkuInfoList(skuIdList).subscribeOn(Schedulers.parallel());
     }
 
     //根据分类id获取分类列表
     @PostMapping("inner/findCategoryList")
-    public List<Category> findCategoryList(@RequestBody List<Long> categoryIdList) {
-        return categoryService.listByIds(categoryIdList);
+    public Mono<List<Category>> findCategoryList(@RequestBody List<Long> categoryIdList) {
+        return Mono.just(categoryService.listByIds(categoryIdList));
     }
 
     //根据关键字匹配sku列表
     @GetMapping("inner/findSkuInfoByKeyword/{keyword}")
-    public List<SkuInfo> findSkuInfoByKeyword(@PathVariable("keyword") String keyword) {
-        return skuInfoService.findSkuInfoByKeyword(keyword);
+    public Mono<List<SkuInfo>> findSkuInfoByKeyword(@PathVariable("keyword") String keyword) {
+        return skuInfoService.findSkuInfoByKeyword(keyword).subscribeOn(Schedulers.parallel());
     }
 
     //获取所有分类
     @GetMapping("inner/findAllCategoryList")
-    public List<Category> findAllCategoryList() {
-        return categoryService.list();
+    public Mono<List<Category>> findAllCategoryList() {
+        return Mono.just(categoryService.list());
     }
 
     //获取新人专享商品
     @GetMapping("inner/findNewPersonSkuInfoList")
-    public List<SkuInfo> findNewPersonSkuInfoList() {
-        return skuInfoService.findNewPersonSkuInfoList();
+    public Mono<List<SkuInfo>> findNewPersonSkuInfoList() {
+        return skuInfoService.findNewPersonSkuInfoList().subscribeOn(Schedulers.parallel());
     }
 
     //根据skuId获取sku信息
     @GetMapping("inner/getSkuInfoVo/{skuId}")
-    public SkuInfoVo getSkuInfoVo(@PathVariable Long skuId) {
-        return skuInfoService.getSkuInfoVo(skuId);
+    public Mono<SkuInfoVo> getSkuInfoVo(@PathVariable Long skuId) {
+        return skuInfoService.getSkuInfoVo(skuId).subscribeOn(Schedulers.parallel());
     }
 
     //验证和锁定库存
     @Operation(description = "锁定库存")
     @PostMapping("inner/checkAndLock/{orderNo}")
-    public Boolean checkAndLock(@RequestBody List<SkuStockLockVo> skuStockLockVoList,
+    public Mono<Boolean> checkAndLock(@RequestBody List<SkuStockLockVo> skuStockLockVoList,
                                 @PathVariable String orderNo) {
-        return skuInfoService.checkAndLock(skuStockLockVoList,orderNo);
+        return skuInfoService.checkAndLock(skuStockLockVoList, orderNo).subscribeOn(Schedulers.parallel());
     }
 }

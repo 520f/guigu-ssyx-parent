@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -34,7 +35,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     //5 根据userId查询提货点和团长信息
     @Override
-    public LeaderAddressVo getLeaderAddressByUserId(Long userId) {
+    public Mono<LeaderAddressVo> getLeaderAddressByUserId(Long userId) {
         //根据userId查询用户默认的团长id
         UserDelivery userDelivery = userDeliveryMapper.selectOne(
                 new LambdaQueryWrapper<UserDelivery>()
@@ -55,7 +56,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         leaderAddressVo.setLeaderPhone(leader.getPhone());
         leaderAddressVo.setWareId(userDelivery.getWareId());
         leaderAddressVo.setStorePath(leader.getStorePath());
-        return leaderAddressVo;
+        return Mono.just(leaderAddressVo);
     }
 
     //7 获取当前登录用户信息，

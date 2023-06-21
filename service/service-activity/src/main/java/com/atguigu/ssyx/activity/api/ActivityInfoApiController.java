@@ -9,6 +9,8 @@ import com.atguigu.ssyx.vo.order.OrderConfirmVo;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
@@ -25,43 +27,40 @@ public class ActivityInfoApiController {
 
     //获取购物车里面满足条件优惠卷和活动的信息
     @PostMapping("inner/findCartActivityAndCoupon/{userId}")
-    public OrderConfirmVo findCartActivityAndCoupon(@RequestBody List<CartInfo> cartInfoList,
+    public Mono<OrderConfirmVo> findCartActivityAndCoupon(@RequestBody List<CartInfo> cartInfoList,
                                                     @PathVariable("userId") Long userId) {
-        return activityInfoService.findCartActivityAndCoupon(cartInfoList,userId);
+        return activityInfoService.findCartActivityAndCoupon(cartInfoList,userId).subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description = "根据skuId列表获取促销信息")
     @PostMapping("inner/findActivity")
-    public Map<Long, List<String>> findActivity(@RequestBody List<Long> skuIdList) {
-        return activityInfoService.findActivity(skuIdList);
+    public Mono<Map<Long, List<String>>> findActivity(@RequestBody List<Long> skuIdList) {
+        return activityInfoService.findActivity(skuIdList).subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description = "根据skuID获取营销数据和优惠卷")
     @GetMapping("inner/findActivityAndCoupon/{skuId}/{userId}")
-    public Map<String,Object> findActivityAndCoupon(@PathVariable Long skuId,
-                                                    @PathVariable Long userId) {
-        return activityInfoService.findActivityAndCoupon(skuId,userId);
+    public Mono<Map<String, Object>> findActivityAndCoupon(@PathVariable Long skuId,
+                                                           @PathVariable Long userId) {
+        return activityInfoService.findActivityAndCoupon(skuId,userId).subscribeOn(Schedulers.parallel());
     }
 
     //获取购物车对应规则数据
     @PostMapping("inner/findCartActivityList")
-    public List<CartInfoVo> findCartActivityList(@RequestBody List<CartInfo> cartInfoList) {
-        return activityInfoService.findCartActivityList(cartInfoList);
+    public Mono<List<CartInfoVo>> findCartActivityList(@RequestBody List<CartInfo> cartInfoList) {
+        return activityInfoService.findCartActivityList(cartInfoList).subscribeOn(Schedulers.parallel());
     }
 
     //获取购物车对应优惠卷
     @PostMapping("inner/findRangeSkuIdList/{couponId}")
-    public CouponInfo findRangeSkuIdList(@RequestBody List<CartInfo> cartInfoList,
-                                         @PathVariable("couponId") Long couponId) {
-        return couponInfoService.findRangeSkuIdList(cartInfoList,couponId);
+    public Mono<CouponInfo> findRangeSkuIdList(@RequestBody List<CartInfo> cartInfoList,@PathVariable("couponId") Long couponId) {
+        return couponInfoService.findRangeSkuIdList(cartInfoList,couponId).subscribeOn(Schedulers.parallel());
     }
 
     //更新优惠卷使用状态
     @GetMapping("inner/updateCouponInfoUseStatus/{couponId}/{userId}/{orderId}")
-    public Boolean updateCouponInfoUseStatus(@PathVariable("couponId") Long couponId,
-                                             @PathVariable("userId") Long userId,
-                                             @PathVariable("orderId") Long orderId) {
+    public Mono<Boolean> updateCouponInfoUseStatus(@PathVariable("couponId") Long couponId, @PathVariable("userId") Long userId, @PathVariable("orderId") Long orderId) {
         couponInfoService.updateCouponInfoUseStatus(couponId,userId,orderId);
-        return true;
+        return Mono.just(true);
     }
 }

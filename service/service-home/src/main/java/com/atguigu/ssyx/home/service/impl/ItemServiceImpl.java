@@ -1,66 +1,54 @@
 package com.atguigu.ssyx.home.service.impl;
 
-import com.atguigu.ssyx.activity.client.ActivityFeignClient;
-import com.atguigu.ssyx.client.product.ProductFeignClient;
-import com.atguigu.ssyx.client.search.SkuFeignClient;
+import com.atguigu.ssyx.activity.client.ActivityReactorClient;
+import com.atguigu.ssyx.client.product.ProductReactorClient;
+import com.atguigu.ssyx.client.search.SkuReactorClient;
 import com.atguigu.ssyx.home.service.ItemService;
 import com.atguigu.ssyx.vo.product.SkuInfoVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @Service
 public class ItemServiceImpl implements ItemService {
 
     @Autowired
-    private ProductFeignClient productFeignClient;
+    private ProductReactorClient productReactorClient;
 
     @Autowired
-    private ActivityFeignClient activityFeignClient;
+    private ActivityReactorClient activityReactorClient;
 
     @Autowired
-    private SkuFeignClient skuFeignClient;
-    @Resource
-    private ThreadPoolExecutor threadPoolExecutor;
+    private SkuReactorClient skuReactorClient;
+
     //详情
     @Override
-    public Map<String, Object> item(Long skuId, Long userId) {
+    public Mono<Map<String, Object>> item(Long skuId, Long userId) {
         Map<String, Object> result = new HashMap<>();
 
-        //skuId查询
-        CompletableFuture<SkuInfoVo> skuInfocompletableFuture =
-                CompletableFuture.supplyAsync(() -> {
-            //远程调用获取sku对应数据
-            SkuInfoVo skuInfoVo = productFeignClient.getSkuInfoVo(skuId);
-            result.put("skuInfoVo", skuInfoVo);
-            return skuInfoVo;
-        },threadPoolExecutor);
+        //skuId查询,远程调用获取sku对应数据
+        Mono<SkuInfoVo> skuInfoVoMono = productReactorClient.getSkuInfoVo(skuId);
 
         //sku对应优惠卷信息
-        CompletableFuture<Void> activityCompletableFuture = CompletableFuture.runAsync(() -> {
-            //远程调用获取优惠卷
-            Map<String,Object> activityMap =
-                    activityFeignClient.findActivityAndCoupon(skuId,userId);
-            result.putAll(activityMap);
-        },threadPoolExecutor);
+        Mono<Map<String, Object>> activityMapMono = activityReactorClient.findActivityAndCoupon(skuId, userId);
 
-        //更新商品热度
-        CompletableFuture<Void> hotCompletableFuture = CompletableFuture.runAsync(() -> {
-            //远程调用更新热度
-            skuFeignClient.incrHotScore(skuId);
-        },threadPoolExecutor);
+        //更新商品热度,远程调用更新热度
+        Mono.fromRunnable(() -> {
+            skuReactorClient.incrHotScore(skuId).subscribeOn(Schedulers.parallel()).subscribe();
+        }).subscribeOn(Schedulers.parallel()).subscribe();
 
-        //任务组合
-        CompletableFuture.allOf(
-                skuInfocompletableFuture,
-                activityCompletableFuture,
-                hotCompletableFuture
-        ).join();
-        return result;
+        return Mono.zip(skuInfoVoMono, activityMapMono.switchIfEmpty(Mono.just(new HashMap<>()))).map(tuple -> {
+                    SkuInfoVo skuInfoVo = tuple.getT1();
+                    result.put("skuInfoVo", skuInfoVo);
+                    Map<String, Object> activityMap = tuple.getT2();
+                    result.putAll(activityMap);
+                    return result;
+                })
+                .switchIfEmpty(Mono.just(result))
+                .subscribeOn(Schedulers.parallel());
     }
 }

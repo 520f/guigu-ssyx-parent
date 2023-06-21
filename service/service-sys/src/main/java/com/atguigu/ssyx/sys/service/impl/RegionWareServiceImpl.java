@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -26,8 +27,8 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
 
     //开通区域列表
     @Override
-    public IPage<RegionWare> selectPageRegionWare(Page<RegionWare> pageParam,
-                                                  RegionWareQueryVo regionWareQueryVo) {
+    public Mono<IPage<RegionWare>> selectPageRegionWare(Page<RegionWare> pageParam,
+                                     RegionWareQueryVo regionWareQueryVo) {
         //1 获取查询条件值
         String keyword = regionWareQueryVo.getKeyword();
 
@@ -41,7 +42,7 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
         //3 调用方法实现条件分页查询
 
         //4 数据返回
-        return baseMapper.selectPage(pageParam, wrapper);
+        return Mono.justOrEmpty(baseMapper.selectPage(pageParam, wrapper));
     }
 
     //添加开通区域

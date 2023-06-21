@@ -12,12 +12,11 @@ import com.atguigu.ssyx.enums.user.User;
 import com.atguigu.ssyx.user.service.UserService;
 import com.atguigu.ssyx.user.utils.ConstantPropertiesUtil;
 import com.atguigu.ssyx.user.utils.HttpClientUtils;
-import com.atguigu.ssyx.vo.user.LeaderAddressVo;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,13 +28,10 @@ public class WeixinApiController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private RedisTemplate redisTemplate;
-
     //用户微信授权登录
     @Operation(description = "微信登录获取openid(小程序)")
     @GetMapping("/wxLogin/{code}")
-    public Result<Map<String,Object>> loginWx(@PathVariable String code) {
+    public Mono<Result<Map<String,Object>>> loginWx(@PathVariable String code) {
         //1 得到微信返回code临时票据值
         //2 拿着code + 小程序id + 小程序秘钥 请求微信接口服务
         //// 使用HttpClient工具请求
@@ -87,30 +83,32 @@ public class WeixinApiController {
         //5 根据userId查询提货点和团长信息
         ////提货点  user表  user_delivery表
         ////团长    leader表
-        LeaderAddressVo leaderAddressVo =userService.getLeaderAddressByUserId(user.getId());
+        User finalUser = user;
+        return userService.getLeaderAddressByUserId(user.getId()).map(leaderAddressVo->{
+            //6 使用sa-token框架根据user.id生成token字符串
+            StpUtil.login(finalUser.getId());
+            SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+            String token = tokenInfo.getTokenValue();
 
-        //6 使用sa-token框架根据user.id生成token字符串
-        StpUtil.login(user.getId());
-        SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
-        String token = tokenInfo.getTokenValue();
 
+            //7 获取当前登录用户信息，放到Redis里面，设置有效时间
+            UserLoginVo userLoginVo = userService.getUserLoginVo(finalUser.getId());
+            tokenInfo.setLoginDevice("WX");
+            tokenInfo.setTag(JSON.toJSONString(userLoginVo));
 
-        //7 获取当前登录用户信息，放到Redis里面，设置有效时间
-        UserLoginVo userLoginVo = userService.getUserLoginVo(user.getId());
-        tokenInfo.setLoginDevice("WX");
-        tokenInfo.setTag(JSON.toJSONString(userLoginVo));
+            //8 需要数据封装到map返回
+            Map<String,Object> map = new HashMap<>();
+            map.put("user", finalUser);
+            map.put("token",token);
+            map.put("leaderAddressVo",leaderAddressVo);
+            return Result.ok(map);
+        });
 
-        //8 需要数据封装到map返回
-        Map<String,Object> map = new HashMap<>();
-        map.put("user",user);
-        map.put("token",token);
-        map.put("leaderAddressVo",leaderAddressVo);
-        return Result.ok(map);
     }
 
     @PostMapping("/auth/updateUser")
     @Operation(description = "更新用户昵称与头像")
-    public Result<Boolean> updateUser(@RequestBody User user) {
+    public Mono<Result<Boolean>> updateUser(@RequestBody User user) {
         Long userId = StpUtil.getLoginId(-1L);
         //获取当前登录用户id
         User user1 = userService.getById(userId);
@@ -118,6 +116,6 @@ public class WeixinApiController {
         user1.setNickName(user.getNickName().replaceAll("[ue000-uefff]", "*"));
         user1.setPhotoUrl(user.getPhotoUrl());
         userService.updateById(user1);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 }

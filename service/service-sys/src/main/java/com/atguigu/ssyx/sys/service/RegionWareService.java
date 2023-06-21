@@ -5,6 +5,7 @@ import com.atguigu.ssyx.vo.sys.RegionWareQueryVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -17,7 +18,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface RegionWareService extends IService<RegionWare> {
 
     //开通区域列表
-    IPage<RegionWare> selectPageRegionWare(Page<RegionWare> pageParam, RegionWareQueryVo regionWareQueryVo);
+    Mono<IPage<RegionWare>> selectPageRegionWare(Page<RegionWare> pageParam, RegionWareQueryVo regionWareQueryVo);
 
     //添加开通区域
     void saveRegionWare(RegionWare regionWare);

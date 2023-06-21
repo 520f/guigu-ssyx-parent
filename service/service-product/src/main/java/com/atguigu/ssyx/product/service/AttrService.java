@@ -2,6 +2,7 @@ package com.atguigu.ssyx.product.service;
 
 import com.atguigu.ssyx.model.product.Attr;
 import com.baomidou.mybatisplus.extension.service.IService;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -16,5 +17,5 @@ import java.util.List;
 public interface AttrService extends IService<Attr> {
 
     //根据平台属性分组id查询
-    List<Attr> getAttrListByGroupId(Long groupId);
+    Mono<List<Attr>> getAttrListByGroupId(Long groupId);
 }

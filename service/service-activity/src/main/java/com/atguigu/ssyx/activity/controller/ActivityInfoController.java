@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
@@ -30,59 +32,53 @@ public class ActivityInfoController {
     private ActivityInfoService activityInfoService;
 
     //列表
-//    url: `${api_name}/${page}/${limit}`,
-//    method: 'get'
     @GetMapping("{page}/{limit}")
-    public Result<IPage<ActivityInfo>> list(@PathVariable Long page,
-                       @PathVariable Long limit) {
-        Page<ActivityInfo> pageParam = new Page<>(page,limit);
-        return Result.ok(activityInfoService.selectPage(pageParam));
+    public Mono<Result<IPage<ActivityInfo>>> list(@PathVariable Long page,
+                                            @PathVariable Long limit) {
+        Page<ActivityInfo> pageParam = new Page<>(page, limit);
+        return activityInfoService.selectPage(pageParam)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
-//    url: `${api_name}/get/${id}`,
-//    method: 'get'
     @GetMapping("get/{id}")
-    public Result<ActivityInfo> get(@PathVariable Long id) {
+    public Mono<Result<ActivityInfo>> get(@PathVariable Long id) {
         ActivityInfo activityInfo = activityInfoService.getById(id);
         activityInfo.setActivityTypeString(activityInfo.getActivityType().getComment());
-        return Result.ok(activityInfo);
+        return Mono.just(Result.ok(activityInfo));
     }
 
     //添加活动
-//    url: `${api_name}/save`,
-//    method: 'post',
-//    data: role
     @PostMapping("save")
-    public Result<Boolean> save(@RequestBody ActivityInfo activityInfo) {
+    public Mono<Result<Boolean>> save(@RequestBody ActivityInfo activityInfo) {
         activityInfoService.save(activityInfo);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
-    //营销活动规则相关接口
     //1 根据活动id获取活动规则数据
-//    url: `${api_name}/findActivityRuleList/${id}`,
-//    method: 'get'
     @GetMapping("findActivityRuleList/{id}")
-    public Result<Map<String,Object>> findActivityRuleList(@PathVariable Long id) {
-        return Result.ok(activityInfoService.findActivityRuleList(id));
+    public Mono<Result<Map<String, Object>>> findActivityRuleList(@PathVariable Long id) {
+        return activityInfoService.findActivityRuleList(id)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)));
     }
 
     //2 在活动里面添加规则数据
-//    url: `${api_name}/saveActivityRule`,
-//    method: 'post',
-//    data: rule
     @PostMapping("saveActivityRule")
-    public Result<Boolean> saveActivityRule(@RequestBody ActivityRuleVo activityRuleVo) {
+    public Mono<Result<Boolean>> saveActivityRule(@RequestBody ActivityRuleVo activityRuleVo) {
         activityInfoService.saveActivityRule(activityRuleVo);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //3 根据关键字查询匹配sku信息
 //    url: `${api_name}/findSkuInfoByKeyword/${keyword}`,
 //    method: 'get'
     @GetMapping("findSkuInfoByKeyword/{keyword}")
-    public Result<List<SkuInfo>> findSkuInfoByKeyword(@PathVariable("keyword") String keyword) {
-        return Result.ok(activityInfoService.findSkuInfoByKeyword(keyword));
+    public Mono<Result<List<SkuInfo>>> findSkuInfoByKeyword(@PathVariable("keyword") String keyword) {
+        return activityInfoService.findSkuInfoByKeyword(keyword)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)));
     }
 
 }

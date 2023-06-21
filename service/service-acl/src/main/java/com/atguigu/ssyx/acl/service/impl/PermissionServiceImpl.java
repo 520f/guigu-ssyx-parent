@@ -7,6 +7,7 @@ import com.atguigu.ssyx.model.acl.Permission;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,12 +16,12 @@ import java.util.List;
 public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permission> implements PermissionService {
     //查询所有菜单
     @Override
-    public List<Permission> queryAllPermission() {
+    public Mono<List<Permission>> queryAllPermission() {
         //1 查询所有菜单
         List<Permission> allPermissionList =baseMapper.selectList(null);
 
         //2 转换要求数据格式
-        return PermissionHelper.buildPermission(allPermissionList);
+        return Mono.just(PermissionHelper.buildPermission(allPermissionList));
     }
 
     //递归删除菜单

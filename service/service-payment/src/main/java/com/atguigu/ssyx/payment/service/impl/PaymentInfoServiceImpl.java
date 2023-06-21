@@ -8,13 +8,14 @@ import com.atguigu.ssyx.model.order.OrderInfo;
 import com.atguigu.ssyx.model.order.PaymentInfo;
 import com.atguigu.ssyx.mq.constant.MqConst;
 import com.atguigu.ssyx.mq.service.RabbitService;
-import com.atguigu.ssyx.order.client.OrderFeignClient;
+import com.atguigu.ssyx.order.client.OrderReactorClient;
 import com.atguigu.ssyx.payment.mapper.PaymentInfoMappper;
 import com.atguigu.ssyx.payment.service.PaymentInfoService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -24,7 +25,7 @@ import java.util.Map;
 public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMappper, PaymentInfo> implements PaymentInfoService {
 
     @Autowired
-    private OrderFeignClient orderFeignClient;
+    private OrderReactorClient orderReactorClient;
 
     @Autowired
     private RabbitService rabbitService;
@@ -38,29 +39,27 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMappper, Paym
     }
 
     @Override
-    public PaymentInfo savePaymentInfo(String orderNo) {
+    public Mono<PaymentInfo> savePaymentInfo(String orderNo) {
         //远程调用调用，根据orderNo查询订单信息
-        OrderInfo orderInfo = orderFeignClient.getOrderInfo(orderNo);
-        if(orderInfo == null) {
-            throw new SsyxException(ResultCodeEnum.DATA_ERROR);
-        }
-        //封装到PaymentInfo对象
-        PaymentInfo paymentInfo = new PaymentInfo();
-        paymentInfo.setCreateTime(new Date());
-        paymentInfo.setOrderId(orderInfo.getId());
-        paymentInfo.setPaymentType(PaymentType.WEIXIN);
-        paymentInfo.setUserId(orderInfo.getUserId());
-        paymentInfo.setOrderNo(orderInfo.getOrderNo());
-        paymentInfo.setPaymentStatus(PaymentStatus.UNPAID);
-        String subject = "userID:"+orderInfo.getUserId()+"下订单";
-        paymentInfo.setSubject(subject);
-        //paymentInfo.setTotalAmount(orderInfo.getTotalAmount());
-        //TODO 为了测试
-        paymentInfo.setTotalAmount(new BigDecimal("0.01"));
+        return orderReactorClient.getOrderInfo(orderNo).map(orderInfo->{
+            //封装到PaymentInfo对象
+            PaymentInfo paymentInfo = new PaymentInfo();
+            paymentInfo.setCreateTime(new Date());
+            paymentInfo.setOrderId(orderInfo.getId());
+            paymentInfo.setPaymentType(PaymentType.WEIXIN);
+            paymentInfo.setUserId(orderInfo.getUserId());
+            paymentInfo.setOrderNo(orderInfo.getOrderNo());
+            paymentInfo.setPaymentStatus(PaymentStatus.UNPAID);
+            String subject = "userID:"+orderInfo.getUserId()+"下订单";
+            paymentInfo.setSubject(subject);
+            //paymentInfo.setTotalAmount(orderInfo.getTotalAmount());
+            //TODO 为了测试
+            paymentInfo.setTotalAmount(new BigDecimal("0.01"));
 
-        //调用方法实现添加
-        baseMapper.insert(paymentInfo);
-        return paymentInfo;
+            //调用方法实现添加
+            baseMapper.insert(paymentInfo);
+            return paymentInfo;
+        }).switchIfEmpty(Mono.error(new SsyxException(ResultCodeEnum.DATA_ERROR)));
     }
 
     //3.1 支付成功，修改支付记录表状态：已经支付

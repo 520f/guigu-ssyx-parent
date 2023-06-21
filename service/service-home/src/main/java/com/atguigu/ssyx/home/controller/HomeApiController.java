@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Map;
 
@@ -22,9 +24,12 @@ public class HomeApiController {
 
     @Operation(description = "首页数据显示接口")
     @GetMapping("index")
-    public Result<Map<String,Object>> index() {
+    public Mono<Result<Map<String, Object>>> index() {
         Long userId = StpUtil.getLoginId(-1L);
-        return Result.ok(homeService.homeData(userId));
+        return homeService.homeData(userId)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
 }

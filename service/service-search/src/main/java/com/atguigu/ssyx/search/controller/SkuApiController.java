@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -24,38 +26,39 @@ public class SkuApiController {
 
     //查询分类商品
     @GetMapping("{page}/{limit}")
-    public Result<Page<SkuEs>> listSku(@PathVariable Integer page,
-                          @PathVariable Integer limit,
-                          SkuEsQueryVo skuEsQueryVo) {
+    public Mono<Result<Page<SkuEs>>> listSku(@PathVariable Integer page,@PathVariable Integer limit,SkuEsQueryVo skuEsQueryVo) {
         //创建pageable对象，0代表第一页
         Pageable pageable = PageRequest.of(page-1,limit);
-        return Result.ok(skuService.search(pageable,skuEsQueryVo));
+        return skuService.search(pageable, skuEsQueryVo)
+                .mapNotNull(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     //上架
     @GetMapping("inner/upperSku/{skuId}")
-    public Result<Boolean> upperSku(@PathVariable Long skuId) {
+    public Mono<Result<Boolean>> upperSku(@PathVariable Long skuId) {
         skuService.upperSku(skuId);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //下架
     @GetMapping("inner/lowerSku/{skuId}")
-    public Result<Boolean> lowerSku(@PathVariable Long skuId) {
+    public Mono<Result<Boolean>> lowerSku(@PathVariable Long skuId) {
         skuService.lowerSku(skuId);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //获取爆款商品
     @GetMapping("inner/findHotSkuList")
-    public List<SkuEs> findHotSkuList() {
-        return skuService.findHotSkuList();
+    public Mono<List<SkuEs>> findHotSkuList() {
+        return skuService.findHotSkuList().subscribeOn(Schedulers.parallel());
     }
 
     //更新商品热度
     @GetMapping("inner/incrHotScore/{skuId}")
-    public Boolean incrHotScore(@PathVariable("skuId") Long skuId) {
+    public Mono<Boolean> incrHotScore(@PathVariable("skuId") Long skuId) {
         skuService.incrHotScore(skuId);
-        return true;
+        return Mono.just(true);
     }
 }

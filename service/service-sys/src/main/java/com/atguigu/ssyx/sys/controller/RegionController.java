@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -29,12 +31,13 @@ public class RegionController {
     private RegionService regionService;
 
     //根据区域关键字查询区域列表信息
-//    url: `${api_name}/findRegionByKeyword/${keyword}`,
-//    method: 'get'
     @Operation(description = "根据区域关键字查询区域列表信息")
     @GetMapping("findRegionByKeyword/{keyword}")
-    public Result<List<Region>> findRegionByKeyword(@PathVariable("keyword") String keyword) {
-        return Result.ok(regionService.getRegionByKeyword(keyword));
+    public Mono<Result<List<Region>>> findRegionByKeyword(@PathVariable("keyword") String keyword) {
+        return regionService.getRegionByKeyword(keyword)
+                .mapNotNull(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 }
 

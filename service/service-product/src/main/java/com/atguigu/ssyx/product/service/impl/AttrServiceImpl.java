@@ -6,6 +6,7 @@ import com.atguigu.ssyx.product.service.AttrService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -22,9 +23,9 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr> implements At
 
     //根据平台属性分组id查询
     @Override
-    public List<Attr> getAttrListByGroupId(Long groupId) {
+    public Mono<List<Attr>> getAttrListByGroupId(Long groupId) {
         LambdaQueryWrapper<Attr> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Attr::getAttrGroupId,groupId);
-        return baseMapper.selectList(wrapper);
+        return Mono.just(baseMapper.selectList(wrapper));
     }
 }

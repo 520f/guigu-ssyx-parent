@@ -6,6 +6,8 @@ import com.atguigu.ssyx.product.service.AttrService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -27,46 +29,47 @@ public class AttrController {
 
     //平台属性列表方法
     //根据平台属性分组id查询
-//    url: `${api_name}/${groupId}`,
-//    method: 'get'
     @Operation(description = "根据平台属性分组id查询")
     @GetMapping("{groupId}")
-    public Result<List<Attr>> list(@PathVariable Long groupId) {
-        return Result.ok(attrService.getAttrListByGroupId(groupId));
+    public Mono<Result<List<Attr>>> list(@PathVariable Long groupId) {
+        return attrService.getAttrListByGroupId(groupId)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     @Operation(description= "获取")
     @GetMapping("get/{id}")
-    public Result<Attr> get(@PathVariable Long id) {
-        return Result.ok(attrService.getById(id));
+    public Mono<Result<Attr>> get(@PathVariable Long id) {
+        return Mono.just(Result.ok(attrService.getById(id)));
     }
 
     @Operation(description= "新增")
     @PostMapping("save")
-    public Result<Boolean> save(@RequestBody Attr attr) {
+    public Mono<Result<Boolean>> save(@RequestBody Attr attr) {
         attrService.save(attr);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     @Operation(description= "修改")
     @PutMapping("update")
-    public Result<Boolean> updateById(@RequestBody Attr attr) {
+    public Mono<Result<Boolean>> updateById(@RequestBody Attr attr) {
         attrService.updateById(attr);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     @Operation(description= "删除")
     @DeleteMapping("remove/{id}")
-    public Result<Boolean> remove(@PathVariable Long id) {
+    public Mono<Result<Boolean>> remove(@PathVariable Long id) {
         attrService.removeById(id);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     @Operation(description= "根据id列表删除")
     @DeleteMapping("batchRemove")
-    public Result<Boolean> batchRemove(@RequestBody List<Long> idList) {
+    public Mono<Result<Boolean> > batchRemove(@RequestBody List<Long> idList) {
         attrService.removeByIds(idList);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 }
 

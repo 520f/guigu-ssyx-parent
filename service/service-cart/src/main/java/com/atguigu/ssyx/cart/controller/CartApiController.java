@@ -1,13 +1,15 @@
 package com.atguigu.ssyx.cart.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.atguigu.ssyx.activity.client.ActivityFeignClient;
+import com.atguigu.ssyx.activity.client.ActivityReactorClient;
 import com.atguigu.ssyx.cart.service.CartInfoService;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.model.order.CartInfo;
-import com.atguigu.ssyx.vo.order.OrderConfirmVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class CartApiController {
     private CartInfoService cartInfoService;
     
     @Autowired
-    private ActivityFeignClient activityFeignClient;
+    private ActivityReactorClient activityReactorClient;
 
     //1 根据skuId选中
     @GetMapping("checkCart/{skuId}/{isChecked}")
@@ -54,54 +56,64 @@ public class CartApiController {
      *
      */
     @GetMapping("activityCartList")
-    public Result<OrderConfirmVo> activityCartList() {
+    public Mono<Result<?>> activityCartList() {
         // 获取用户Id
         Long userId = StpUtil.getLoginId(-1L);
-        List<CartInfo> cartInfoList = cartInfoService.getCartList(userId);
-        return Result.ok(activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId));
+        return cartInfoService.getCartList(userId).flatMap(cartInfoList -> {
+            if (CollectionUtils.isEmpty(cartInfoList)) {
+                return Mono.just(Result.ok(null));
+            }
+            return activityReactorClient.findCartActivityAndCoupon(cartInfoList, userId)
+                    .map(Result::ok)
+                    .switchIfEmpty(Mono.just(Result.ok(null)));
+        }).subscribeOn(Schedulers.parallel());
+
     }
 
     //购物车列表
     @GetMapping("cartList")
-    public Result<List<CartInfo>> cartList() {
+    public Mono<Result<List<CartInfo>>> cartList() {
         //获取userId
         Long userId = StpUtil.getLoginId(-1L);
-        return Result.ok(cartInfoService.getCartList(userId));
+        return cartInfoService.getCartList(userId)
+                .map(Result::ok)
+                .switchIfEmpty(Mono.just(Result.ok(null)))
+                .subscribeOn(Schedulers.parallel());
     }
 
     //添加商品到购物车
     //添加内容：当前登录用户id，skuId，商品数量
     @GetMapping("addToCart/{skuId}/{skuNum}")
-    public Result<String> addToCart(@PathVariable("skuId") Long skuId,
+    public Mono<Result<String>> addToCart(@PathVariable("skuId") Long skuId,
                             @PathVariable("skuNum") Integer skuNum) {
         //获取当前登录用户Id
         Long userId = StpUtil.getLoginId(-1L);
         cartInfoService.addToCart(userId,skuId,skuNum);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //根据skuId删除购物车
     @DeleteMapping("deleteCart/{skuId}")
-    public Result<Boolean> deleteCart(@PathVariable("skuId") Long skuId) {
+    public Mono<Result<Boolean>> deleteCart(@PathVariable("skuId") Long skuId) {
         Long userId = StpUtil.getLoginId(-1L);
         cartInfoService.deleteCart(skuId,userId);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //清空购物车
     @DeleteMapping("deleteAllCart")
-    public Result<Boolean> deleteAllCart() {
+    public Mono<Result<Boolean>> deleteAllCart() {
         Long userId = StpUtil.getLoginId(-1L);
         cartInfoService.deleteAllCart(userId);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     //批量删除购物车 多个skuId
     @DeleteMapping("batchDeleteCart")
-    public Result<Boolean> batchDeleteCart(@RequestBody List<Long> skuIdList) {
+    public Mono<Result<Boolean>> batchDeleteCart(@RequestBody List<Long> skuIdList) {
         Long userId = StpUtil.getLoginId(-1L);
         cartInfoService.batchDeleteCart(skuIdList,userId);
-        return Result.ok(null);
+        return Mono.just(Result.ok(null));
     }
 
     /**
@@ -109,7 +121,8 @@ public class CartApiController {
      *
      */
     @GetMapping("inner/getCartCheckedList/{userId}")
-    public List<CartInfo> getCartCheckedList(@PathVariable("userId") Long userId) {
-        return cartInfoService.getCartCheckedList(userId);
+    public Mono<List<CartInfo>> getCartCheckedList(@PathVariable("userId") Long userId) {
+        return cartInfoService.getCartCheckedList(userId)
+                .subscribeOn(Schedulers.parallel());
     }
 }

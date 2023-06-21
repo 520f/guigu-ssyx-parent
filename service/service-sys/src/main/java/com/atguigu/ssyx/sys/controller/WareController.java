@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -32,8 +33,8 @@ public class WareController {
 //    method: 'get'
     @Operation(description = "查询所有仓库列表")
     @GetMapping("findAllList")
-    public Result<List<Ware>> findAllList() {
-        return Result.ok(wareService.list());
+    public Mono<Result<List<Ware>>> findAllList() {
+        return Mono.just(Result.ok(wareService.list()));
     }
 }
 
