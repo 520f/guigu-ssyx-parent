@@ -356,17 +356,19 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     public void orderPay(String orderNo) {
         //查询订单状态是否已经修改完成了支付状态
-        OrderInfo orderInfo = this.getOrderInfoByOrderNo(orderNo);
-        if (orderInfo == null || orderInfo.getOrderStatus() != OrderStatus.UNPAID) {
-            return;
-        }
-        //更新状态
-        this.updateOrderStatus(orderInfo.getId());
+        getOrderInfoByOrderNo(orderNo).mapNotNull(orderInfo->{
+            if (orderInfo == null || orderInfo.getOrderStatus() != OrderStatus.UNPAID) {
+                return null;
+            }
+            //更新状态
+            this.updateOrderStatus(orderInfo.getId());
 
-        //扣减库存
-        rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
-                MqConst.ROUTING_MINUS_STOCK,
-                orderNo);
+            //扣减库存
+            rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
+                    MqConst.ROUTING_MINUS_STOCK,
+                    orderNo);
+            return null;
+        });
     }
 
     //订单查询
