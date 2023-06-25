@@ -47,7 +47,7 @@ docker run --env MODE=standalone --name nacos --restart=always -d -p 8848:8848  
 | 升级响应式之前技术          |   升级响应式之前技术是否支持响应式    | 升级响应式之后技术     | 升级响应式之后技术是否支持响应式 | 编码是否完成 |
 |--------------------|:---------------------:|---------------|:----------------:|--------|
 | tomcat             | 原生不支持响应式,也能做，但不如netty | netty         |        是         | 已完成    |
-| openFeign          |           否           | webclient     |        是         | 正在开发   |
+| openFeign          |           否           | webclient     |        是         | 已完成   |
 | springmvc          |           否           | springwebflux |        是         | 已完成    |
 | jwt                |           否           | sa-token      |        是         | 已完成    |
 | CompletableFuture  |           否           | mono或flux     |        是         | 正在开发   |
